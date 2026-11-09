@@ -1,13 +1,13 @@
 {
   "name": "NamA GPS Camera Pro",
   "short_name": "NamACamera",
-  "start_url": "/namacamera/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#035835",
   "icons": [
     {
-      "src": "/namacamera/icon.png",
+      "src": "./icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
