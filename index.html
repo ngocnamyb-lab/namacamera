@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NamA GPS Camera Pro</title>
+    <title>NamA GPS Camera Pro v5</title>
     <link rel="manifest" href="./manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -18,10 +18,10 @@
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
         canvas { display: none; }
 
-        /* Chữ bản quyền dọc cách lề phải khoảng 2 li */
+        /* Chữ bản quyền dọc cách lề phải chuẩn khoảng 2 li (15px) */
         .vertical-watermark-preview {
             position: absolute;
-            right: 8px;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%) rotate(90deg);
             font-size: 0.85rem;
@@ -49,9 +49,9 @@
             transition: background 0.2s;
         }
         .wm-header-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .wm-badge { background: #ffcc00; color: #000; font-weight: bold; padding: 2px 6px; font-size: 0.75rem; border-radius: 3px; }
+        .wm-badge { background: #ffcc00; color: #000; font-weight: bold; padding: 2px 6px; font-size: 0.8rem; border-radius: 3px; display: inline-flex; align-items: center; }
+        .wm-logo-img { max-height: 24px; max-width: 80px; object-fit: contain; display: none; }
         .wm-title-text { font-size: 1rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
-        .wm-logo-img { max-height: 24px; max-width: 80px; object-fit: contain; display: none; margin-left: auto; }
         
         .wm-details { font-size: 0.75rem; color: #ddd; display: flex; flex-direction: column; gap: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
@@ -139,11 +139,11 @@
         <div class="watermark-layer" id="watermarkLayer">
             <div class="wm-header-row">
                 <span id="uiBadge" class="wm-badge">Điểm danh</span>
-                <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
                 <img id="uiLogo" class="wm-logo-img" alt="Logo">
+                <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 13:20</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 13:25</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                 <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
@@ -178,7 +178,7 @@
             </div>
 
             <div class="toggle-item">
-                <label>Tải Logo lên</label>
+                <label>Tải Logo lên (Thay chỗ Điểm danh)</label>
                 <div>
                     <button class="btn-upload-modal" onclick="document.getElementById('fileLogo').click()">Chọn ảnh</button>
                     <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
@@ -209,7 +209,7 @@
                 <input type="range" id="verticalOpacity" min="10" max="100" value="35" oninput="updateUI()">
             </div>
             <div class="toggle-item">
-                <label>Nhãn (Badge)</label>
+                <label>Nhãn phụ (nếu không dùng Logo)</label>
                 <input type="text" id="txtBadge" value="Điểm danh" oninput="updateUI()">
             </div>
             <div class="toggle-item">
@@ -246,7 +246,9 @@
                 logoImage.src = savedLogo;
                 logoImage.onload = () => {
                     document.getElementById('uiLogo').src = savedLogo;
-                    document.getElementById('uiLogo').style.display = document.getElementById('chkLogo').checked ? 'inline-block' : 'none';
+                    const showLogo = document.getElementById('chkLogo').checked;
+                    document.getElementById('uiLogo').style.display = showLogo ? 'inline-block' : 'none';
+                    document.getElementById('uiBadge').style.display = showLogo ? 'none' : 'inline-block';
                 }
             }
             updateUI();
@@ -335,11 +337,17 @@
             const showNote = document.getElementById('chkNote').checked;
             const noteVal = document.getElementById('txtNoteQuick').value;
 
-            document.getElementById('uiBadge').style.display = badgeVal ? 'inline-block' : 'none';
-            document.getElementById('uiBadge').innerText = badgeVal;
-            document.getElementById('uiTitle').innerText = titleVal;
-            document.getElementById('uiLogo').style.display = (showLogo && logoImage.src) ? 'inline-block' : 'none';
+            // Nếu bật logo và đã có logo, ẩn badge vàng và hiện logo thay thế vị trí đó
+            if (showLogo && logoImage.src) {
+                document.getElementById('uiLogo').style.display = 'inline-block';
+                document.getElementById('uiBadge').style.display = 'none';
+            } else {
+                document.getElementById('uiLogo').style.display = 'none';
+                document.getElementById('uiBadge').style.display = badgeVal ? 'inline-block' : 'none';
+                document.getElementById('uiBadge').innerText = badgeVal;
+            }
 
+            document.getElementById('uiTitle').innerText = titleVal;
             document.getElementById('uiTime').style.display = showTime ? 'block' : 'none';
             document.getElementById('uiLocation').style.display = showLoc ? 'block' : 'none';
             document.getElementById('uiNote').style.display = showNote ? 'block' : 'none';
@@ -385,7 +393,7 @@
             const scale = canvas.width / 1000;
             const pad = Math.round(30 * scale);
 
-            // Vẽ chữ dọc bản quyền cách lề phải chuẩn khoảng 2 li
+            // Vẽ chữ dọc bản quyền cách lề phải chuẩn khoảng 2 li (khoảng 15px theo tỷ lệ)
             ctx.save();
             const vText = document.getElementById('txtVerticalCopyright').value;
             const vColorHex = document.getElementById('verticalColor').value;
@@ -394,7 +402,7 @@
             let vg = parseInt(vColorHex.slice(3, 5), 16) || 255;
             let vb = parseInt(vColorHex.slice(5, 7), 16) || 255;
 
-            ctx.translate(canvas.width - Math.round(15 * scale), canvas.height / 2);
+            ctx.translate(canvas.width - Math.round(20 * scale), canvas.height / 2);
             ctx.rotate(Math.PI / 2);
             ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
             ctx.fillStyle = `rgba(${vr}, ${vg}, ${vb}, ${vAlpha})`;
@@ -416,11 +424,21 @@
 
             let currentY = canvas.height - pad - boxH + Math.round(30 * scale);
 
+            const showLogo = document.getElementById('chkLogo').checked;
             const badgeText = document.getElementById('txtBadge').value;
             const titleText = document.getElementById('txtTitle').value;
             
             ctx.font = `bold ${Math.round(28 * scale)}px sans-serif`;
-            if (badgeText) {
+
+            // Nếu có logo, vẽ logo thay thế chỗ chữ điểm danh
+            if (showLogo && logoImage.src) {
+                const lw = Math.round(100 * scale);
+                const lh = (logoImage.height / logoImage.width) * lw;
+                ctx.drawImage(logoImage, pad + Math.round(20 * scale), currentY - Math.round(24 * scale), lw, lh);
+                
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(titleText, pad + Math.round(140 * scale), currentY);
+            } else if (badgeText) {
                 ctx.fillStyle = "#ffcc00";
                 ctx.fillText(badgeText, pad + Math.round(20 * scale), currentY);
                 ctx.fillStyle = "#ffffff";
@@ -428,12 +446,6 @@
             } else {
                 ctx.fillStyle = "#ffffff";
                 ctx.fillText(titleText, pad + Math.round(20 * scale), currentY);
-            }
-
-            if (document.getElementById('chkLogo').checked && logoImage.src) {
-                const lw = Math.round(110 * scale);
-                const lh = (logoImage.height / logoImage.width) * lw;
-                ctx.drawImage(logoImage, canvas.width - pad - lw - Math.round(20 * scale), currentY - Math.round(22 * scale), lw, lh);
             }
 
             currentY += Math.round(45 * scale);
