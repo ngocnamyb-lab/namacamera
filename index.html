@@ -149,8 +149,8 @@
 
         <div class="action-bar">
             <div class="mode-tabs">
-                <button class="tab-btn active" onclick="switchMode('photo')">Chụp Ảnh</button>
-                <button class="tab-btn" onclick="switchMode('video')">Quay Phim</button>
+                <button class="tab-btn active" onclick="switchMode('photo', event)">Chụp Ảnh</button>
+                <button class="tab-btn" onclick="switchMode('video', event)">Quay Phim</button>
             </div>
             <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
             <div style="font-size: 0.7rem; color: #888;" id="timerDisplay">00:00</div>
@@ -184,7 +184,6 @@
         async function initCamera() {
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-                // Cấu hình an toàn: Cho phép linh động nhận camera có sẵn trên thiết bị
                 mediaStream = await navigator.mediaDevices.getUserMedia({
                     video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
                     audio: currentMode === 'video'
@@ -250,10 +249,10 @@
             }
         }
 
-        function switchMode(mode) {
+        function switchMode(mode, evt) {
             currentMode = mode;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            if(evt && evt.target) evt.target.classList.add('active');
             initCamera();
         }
 
@@ -264,11 +263,10 @@
             canvas.height = video.videoHeight || 720;
             const ctx = canvas.getContext('2d');
 
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            saveFile(canvas.toDataURL('image/jpeg', 0.95), `ANH_GOC_${Date.now()}.jpg`);
-
+            // Vẽ khung hình camera chính lên canvas
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+            // Vẽ chữ watermark dọc (nếu được bật)
             if(document.getElementById('chkVertical').checked) {
                 const vText = document.getElementById('txtVerticalCopyright').value;
                 ctx.save();
@@ -281,12 +279,13 @@
                 ctx.restore();
             }
 
+            // Vẽ khung thông tin nền mờ ở góc dưới
             const pad = 35;
             const boxH = 210;
             ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             ctx.fillRect(pad, canvas.height - boxH - pad, canvas.width - (pad * 2), boxH);
             
-            ctx.fillStyle = "#035835";
+            ctx.fillStyle = "#035835"; // Màu thương hiệu Nam Á
             ctx.fillRect(pad, canvas.height - boxH - pad, 12, boxH);
 
             ctx.fillStyle = "#ffffff";
@@ -311,13 +310,15 @@
             }
             ctx.fillText(`Thời gian: ${timeStr}`, pad + 30, curY);
 
+            // Vẽ logo công ty lên góc phải bảng thông tin (nếu có tải lên)
             if (logoImage) {
                 const lw = 140;
                 const lh = (logoImage.height / logoImage.width) * lw;
                 ctx.drawImage(logoImage, canvas.width - pad - lw - 25, canvas.height - boxH - pad + 30, lw, lh);
             }
 
-            saveFile(canvas.toDataURL('image/jpeg', 0.95), `ANH_GPS_WATERMARK_${Date.now()}.jpg`);
+            // Lưu thành phẩm duy nhất có đầy đủ watermark chuyên nghiệp
+            saveFile(canvas.toDataURL('image/jpeg', 0.95), `NAMA_GPS_${Date.now()}.jpg`);
         }
 
         function saveFile(url, filename) {
