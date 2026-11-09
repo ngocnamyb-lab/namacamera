@@ -10,7 +10,9 @@
         body { background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
         .camera-viewport { position: relative; flex-grow: 1; width: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+        
+        video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
+        canvas { display: none; }
 
         .watermark-layer {
             position: absolute;
@@ -21,7 +23,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            z-index: 5;
+            z-index: 3;
         }
         .wm-left {
             display: flex;
@@ -30,6 +32,18 @@
             font-size: 1.1rem;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .wm-right-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .wm-logo-preview {
+            max-height: 50px;
+            max-width: 80px;
+            object-fit: contain;
+            display: none;
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8));
         }
         .wm-table-preview {
             background: rgba(0, 0, 0, 0.55);
@@ -55,10 +69,10 @@
             letter-spacing: 2px;
             pointer-events: none;
             white-space: nowrap;
-            z-index: 5;
+            z-index: 3;
         }
 
-        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; }
+        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
         
         .note-field-group {
             display: flex;
@@ -125,7 +139,7 @@
 
     <div class="camera-viewport" id="viewport">
         <video id="camVideo" autoplay playsinline muted></video>
-        <canvas id="camCanvas" style="display:none;"></canvas>
+        <canvas id="camCanvas"></canvas>
 
         <div id="uiVerticalText" class="vertical-watermark-preview">NAM A VALUATION</div>
 
@@ -134,8 +148,9 @@
                 <div id="uiNoteDisplay">Máy nâng hạ</div>
                 <div id="uiTimeDisplay" style="font-size: 0.75rem; font-weight: normal; color: #ddd;">2026-11-09 12:00</div>
             </div>
-            <div>
-                <table class="wm-table-preview">
+            <div class="wm-right-container">
+                <img id="uiLogoImg" class="wm-logo-preview" alt="Logo">
+                <table id="uiTableCoords" class="wm-table-preview">
                     <tr>
                         <th></th>
                         <th>Decimal</th>
@@ -163,7 +178,7 @@
         </div>
 
         <div class="toolbar-row">
-            <button class="btn-action-small" onclick="openSettings()">⚙️ Cài đặt chung & Bản quyền</button>
+            <button class="btn-action-small" onclick="openSettings()">⚙️ Cài đặt chung</button>
             <button class="btn-action-small" onclick="document.getElementById('fileLogo').click()">📁 Chọn Logo</button>
             <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
         </div>
@@ -212,9 +227,8 @@
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
                 
-                // Cấu hình linh động tương thích mọi điện thoại
                 const constraints = {
-                    video: { facingMode: "environment" },
+                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
                     audio: currentMode === 'video'
                 };
                 
@@ -223,13 +237,13 @@
                 videoElement.srcObject = mediaStream;
                 await videoElement.play();
             } catch (err) {
-                console.log("Lỗi mở camera: " + err.message);
-                // Fallback nếu lỗi camera sau
                 try {
                     mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                    document.getElementById('camVideo').srcObject = mediaStream;
+                    const videoElement = document.getElementById('camVideo');
+                    videoElement.srcObject = mediaStream;
+                    await videoElement.play();
                 } catch(e) {
-                    alert("Không thể mở camera. Vui lòng kiểm tra quyền truy cập trình duyệt!");
+                    console.log("Không thể mở camera: " + e.message);
                 }
             }
         }
@@ -277,8 +291,11 @@
         }, 1000);
 
         function updateUI() {
-            const note = document.getElementById('txtNote').value;
-            document.getElementById('uiNoteDisplay').innerText = note;
+            const showVertical = document.getElementById('chkVertical').checked;
+            document.getElementById('uiVerticalText').style.display = showVertical ? 'block' : 'none';
+
+            const showCoords = document.getElementById('chkCoords').checked;
+            document.getElementById('uiTableCoords').style.display = showCoords ? 'table' : 'none';
         }
 
         function loadLogo(e) {
@@ -288,6 +305,12 @@
                 reader.onload = evt => {
                     logoImage = new Image();
                     logoImage.src = evt.target.result;
+                    logoImage.onload = () => {
+                        // Hiển thị logo trực tiếp ngay trên giao diện preview
+                        const logoPreview = document.getElementById('uiLogoImg');
+                        logoPreview.src = evt.target.result;
+                        logoPreview.style.display = 'block';
+                    }
                 }
                 reader.readAsDataURL(file);
             }
@@ -312,7 +335,7 @@
             const scale = canvas.width / 1000;
 
             if(document.getElementById('chkVertical').checked) {
-                const vText = document.getElementById('txtVerticalCopyright').value;
+                const vText = document.getElementById('txtVerticalCopyright').value || "NAM A VALUATION APP";
                 ctx.save();
                 ctx.translate(canvas.width - (25 * scale), canvas.height / 2);
                 ctx.rotate(Math.PI / 2);
@@ -343,8 +366,9 @@
             ctx.fillText(timeStr, pad, currentY + Math.round(35 * scale));
             ctx.restore();
 
+            let tableW = 0;
             if(document.getElementById('chkCoords').checked) {
-                const tableW = Math.round(420 * scale);
+                tableW = Math.round(420 * scale);
                 const tableH = Math.round(140 * scale);
                 const tableX = canvas.width - pad - tableW;
                 const tableY = canvas.height - pad - tableH;
@@ -388,6 +412,15 @@
                 ctx.font = `${Math.round(18 * scale)}px sans-serif`;
                 ctx.fillText(gpsData.lngDec, tableX + colW1 + colW2/2, tableY + rowH*2 + rowH/2);
                 ctx.fillText(gpsData.lngDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH*2 + rowH/2);
+            }
+
+            // Vẽ logo lên ảnh chụp (nếu đã chọn logo)
+            if (logoImage) {
+                const lw = Math.round(140 * scale);
+                const lh = (logoImage.height / logoImage.width) * lw;
+                const logoX = canvas.width - pad - tableW - lw - (tableW > 0 ? Math.round(20 * scale) : 0);
+                const logoY = canvas.height - pad - lh;
+                ctx.drawImage(logoImage, logoX, logoY, lw, lh);
             }
 
             saveFile(canvas.toDataURL('image/jpeg', 0.95), `NAM_A_GPS_${Date.now()}.jpg`);
