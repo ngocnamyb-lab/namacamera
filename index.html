@@ -7,23 +7,24 @@
     <link rel="manifest" href="./manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        html, body { width: 100vw; height: 100vh; background: #000; color: #fff; display: flex; flex-direction: column; overflow: hidden; position: fixed; }
 
-        .top-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.6); z-index: 10; font-size: 0.85rem; }
-        .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 5px 10px; border-radius: 15px; cursor: pointer; font-size: 0.75rem; }
+        .top-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(0,0,0,0.6); z-index: 10; font-size: 0.8rem; flex-shrink: 0; }
+        .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.75rem; }
 
         .camera-viewport { position: relative; flex-grow: 1; width: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
         canvas { display: none; }
 
-        /* Chữ bản quyền dọc bên phải màn hình */
+        /* Chữ bản quyền dọc cách lề phải khoảng 2 li */
         .vertical-watermark-preview {
             position: absolute;
-            right: 15px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%) rotate(90deg);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: bold;
             letter-spacing: 2px;
             pointer-events: none;
@@ -40,21 +41,21 @@
             pointer-events: none;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
             z-index: 3;
             background: rgba(0, 0, 0, 0.65);
-            padding: 10px;
+            padding: 8px 12px;
             border-radius: 8px;
             transition: background 0.2s;
         }
         .wm-header-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .wm-badge { background: #ffcc00; color: #000; font-weight: bold; padding: 2px 8px; font-size: 0.8rem; border-radius: 3px; }
-        .wm-title-text { font-size: 1.1rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
-        .wm-logo-img { max-height: 26px; max-width: 90px; object-fit: contain; display: none; margin-left: auto; }
+        .wm-badge { background: #ffcc00; color: #000; font-weight: bold; padding: 2px 6px; font-size: 0.75rem; border-radius: 3px; }
+        .wm-title-text { font-size: 1rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+        .wm-logo-img { max-height: 24px; max-width: 80px; object-fit: contain; display: none; margin-left: auto; }
         
-        .wm-details { font-size: 0.78rem; color: #ddd; display: flex; flex-direction: column; gap: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+        .wm-details { font-size: 0.75rem; color: #ddd; display: flex; flex-direction: column; gap: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
-        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
+        .control-panel { background: #141414; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #2a2a2a; z-index: 10; flex-shrink: 0; }
         
         .note-field-group {
             display: flex;
@@ -70,17 +71,17 @@
             background: transparent;
             border: none;
             color: #fff;
-            padding: 8px 0;
-            font-size: 0.85rem;
+            padding: 6px 0;
+            font-size: 0.8rem;
             outline: none;
         }
-        .edit-icon { font-size: 1.1rem; cursor: pointer; padding: 4px; }
+        .edit-icon { font-size: 1rem; cursor: pointer; padding: 2px; }
 
         /* Modal Chỉnh sửa mẫu */
         #templateModal {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.85);
             z-index: 99;
             justify-content: flex-end;
@@ -112,20 +113,20 @@
         .btn-done { background: #035835; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; margin-top: 10px; }
 
         .action-bar { display: flex; justify-content: space-between; align-items: center; }
-        .thumbnail-preview { width: 45px; height: 45px; border-radius: 6px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
+        .thumbnail-preview { width: 40px; height: 40px; border-radius: 6px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
         
-        .btn-capture { width: 60px; height: 60px; border-radius: 50%; background: #fff; border: 4px solid #035835; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .btn-capture { width: 55px; height: 55px; border-radius: 50%; background: #fff; border: 4px solid #035835; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
         .btn-capture:active { transform: scale(0.92); }
 
-        .mode-tabs { display: flex; background: #0a0a0a; border-radius: 16px; padding: 2px; }
-        .tab-btn { background: none; border: none; color: #888; padding: 5px 12px; font-size: 0.75rem; font-weight: bold; border-radius: 14px; cursor: pointer; }
+        .mode-tabs { display: flex; background: #0a0a0a; border-radius: 14px; padding: 2px; }
+        .tab-btn { background: none; border: none; color: #888; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
         .tab-btn.active { background: #035835; color: #fff; }
     </style>
 </head>
 <body>
 
     <div class="top-header">
-        <span id="gpsStatus" style="color: #4cd964;">📍 GPS: Đang định vị...</span>
+        <span id="gpsStatus" style="color: #4cd964;">📍 GPS: Đã sẵn sàng</span>
         <button onclick="openTemplateModal()">⚙️ Chỉnh sửa mẫu</button>
     </div>
 
@@ -133,7 +134,6 @@
         <video id="camVideo" autoplay playsinline muted></video>
         <canvas id="camCanvas"></canvas>
 
-        <!-- Chữ bản quyền dọc -->
         <div id="uiVerticalText" class="vertical-watermark-preview">NAM A VALUATION APP</div>
 
         <div class="watermark-layer" id="watermarkLayer">
@@ -143,7 +143,7 @@
                 <img id="uiLogo" class="wm-logo-img" alt="Logo">
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 13:00</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 13:20</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                 <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
@@ -165,7 +165,7 @@
             </div>
 
             <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
-            <div style="font-size: 0.7rem; color: #888;" id="timerDisplay">00:00</div>
+            <div style="font-size: 0.7rem; color: #888; width: 40px; text-align: right;" id="timerDisplay">00:00</div>
         </div>
     </div>
 
@@ -313,13 +313,11 @@
         }
 
         function updateUI() {
-            // Cập nhật nền bảng
             const hexColor = document.getElementById('bgColor').value;
             const opacityPercent = document.getElementById('bgOpacity').value;
             document.getElementById('opacityVal').innerText = opacityPercent;
             document.getElementById('watermarkLayer').style.background = hexToRgba(hexColor, opacityPercent / 100);
 
-            // Cập nhật chữ bản quyền dọc
             const vText = document.getElementById('txtVerticalCopyright').value;
             const vColorHex = document.getElementById('verticalColor').value;
             const vOpacity = document.getElementById('verticalOpacity').value;
@@ -387,7 +385,7 @@
             const scale = canvas.width / 1000;
             const pad = Math.round(30 * scale);
 
-            // Vẽ chữ dọc bản quyền lên ảnh chụp
+            // Vẽ chữ dọc bản quyền cách lề phải chuẩn khoảng 2 li
             ctx.save();
             const vText = document.getElementById('txtVerticalCopyright').value;
             const vColorHex = document.getElementById('verticalColor').value;
@@ -396,7 +394,7 @@
             let vg = parseInt(vColorHex.slice(3, 5), 16) || 255;
             let vb = parseInt(vColorHex.slice(5, 7), 16) || 255;
 
-            ctx.translate(canvas.width - (25 * scale), canvas.height / 2);
+            ctx.translate(canvas.width - Math.round(15 * scale), canvas.height / 2);
             ctx.rotate(Math.PI / 2);
             ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
             ctx.fillStyle = `rgba(${vr}, ${vg}, ${vb}, ${vAlpha})`;
@@ -404,7 +402,7 @@
             ctx.fillText(vText, 0, 0);
             ctx.restore();
 
-            // Vẽ bảng nền watermark chính
+            // Vẽ bảng watermark chính
             ctx.save();
             const hexColor = document.getElementById('bgColor').value;
             const alpha = document.getElementById('bgOpacity').value / 100;
