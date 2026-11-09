@@ -2,9 +2,11 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#035835">
     <title>NamA GPS Camera Pro</title>
     <link rel="manifest" href="./manifest.json">
     <style>
@@ -15,9 +17,10 @@
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(0,0,0,0.8); z-index: 10; font-size: 0.8rem; flex-shrink: 0; }
         .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.75rem; }
 
+        /* Khung hiển thị camera giữ tỷ lệ chuẩn, không bị tràn/bóp méo khi xoay ngang */
         .camera-viewport { position: relative; flex-grow: 1; width: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
+        video { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 1; background: #000; }
         canvas { display: none; }
 
         /* Chữ bản quyền dọc cách lề phải chuẩn khoảng 2 li (15px) */
@@ -145,7 +148,7 @@
                 <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 13:35</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 14:55</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                 <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
@@ -472,7 +475,30 @@
             thumb.src = lastPhotoUrl;
             thumb.style.display = 'block';
 
-            saveFile(lastPhotoUrl, `NAM_A_${Date.now()}.jpg`);
+            // Dùng Web Share API hoặc ẩn thông báo tải tệp
+            canvas.toBlob(blob => {
+                const file = new File([blob], `NAM_A_${Date.now()}.jpg`, { type: "image/jpeg" });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: 'NamA GPS Camera',
+                        text: 'Ảnh khảo sát hiện trường'
+                    }).catch(() => {
+                        fallbackDownload(lastPhotoUrl);
+                    });
+                } else {
+                    fallbackDownload(lastPhotoUrl);
+                }
+            }, 'image/jpeg', 0.95);
+        }
+
+        function fallbackDownload(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `NAM_A_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function openLastPhoto() {
@@ -480,15 +506,6 @@
                 const w = window.open('');
                 w.document.write(`<img src="${lastPhotoUrl}" style="width:100%; height:auto; background:#000;"/>`);
             }
-        }
-
-        function saveFile(url, filename) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
         }
 
         initCamera();
