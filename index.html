@@ -31,7 +31,8 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
         }
         .wm-table-preview {
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 255, 255, 0.4);
             font-size: 0.75rem;
             border-collapse: collapse;
@@ -295,9 +296,9 @@
             // 1. Vẽ khung hình camera
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const scale = canvas.width / 1000; // Tỉ lệ co giãn theo độ phân giải ảnh thực tế
+            const scale = canvas.width / 1000;
 
-            // 2. Vẽ chữ bản quyền dọc bên phải (nếu bật)
+            // 2. Vẽ chữ bản quyền dọc bên phải
             if(document.getElementById('chkVertical').checked) {
                 const vText = document.getElementById('txtVerticalCopyright').value;
                 ctx.save();
@@ -312,7 +313,7 @@
 
             const pad = Math.round(30 * scale);
 
-            // 3. Vẽ phần thông tin bên trái (Tên ghi chú & Thời gian)
+            // 3. Vẽ thông tin bên trái
             ctx.save();
             ctx.font = `bold ${Math.round(36 * scale)}px sans-serif`;
             ctx.fillStyle = "#ffffff";
@@ -331,33 +332,30 @@
             ctx.fillText(timeStr, pad, currentY + Math.round(35 * scale));
             ctx.restore();
 
-            // 4. Vẽ BẢNG TỌA ĐỘ NỀN ĐEN TUYỀN ở góc phải (giống hệt ảnh mẫu của anh)
+            // 4. Vẽ BẢNG TỌA ĐỘ NỀN TRONG SUỐT (mờ đục 55%) ở góc phải
             if(document.getElementById('chkCoords').checked) {
                 const tableW = Math.round(420 * scale);
                 const tableH = Math.round(140 * scale);
                 const tableX = canvas.width - pad - tableW;
                 const tableY = canvas.height - pad - tableH;
 
-                // Nền đen tuyền đặc (không bị trong suốt xám)
-                ctx.fillStyle = "#000000";
+                // Nền đen trong suốt (rgba với độ mờ 0.55)
+                ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
                 ctx.fillRect(tableX, tableY, tableW, tableH);
 
-                // Viền bảng trắng mỏng
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+                // Viền bảng trắng
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(tableX, tableY, tableW, tableH);
 
-                // Chia cột và dòng trong bảng
+                // Chia cột và dòng
                 const colW1 = Math.round(130 * scale);
                 const colW2 = Math.round(145 * scale);
                 const rowH = tableH / 3;
 
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-                // Đường dọc 1
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
                 ctx.beginPath(); ctx.moveTo(tableX + colW1, tableY); ctx.lineTo(tableX + colW1, tableY + tableH); ctx.stroke();
-                // Đường dọc 2
                 ctx.beginPath(); ctx.moveTo(tableX + colW1 + colW2, tableY); ctx.lineTo(tableX + colW1 + colW2, tableY + tableH); ctx.stroke();
-                // Đường ngang 1 & 2
                 ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH); ctx.lineTo(tableX + tableW, tableY + rowH); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH * 2); ctx.lineTo(tableX + tableW, tableY + rowH * 2); ctx.stroke();
 
@@ -367,11 +365,9 @@
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
 
-                // Tiêu đề cột
                 ctx.fillText("Decimal", tableX + colW1 + colW2/2, tableY + rowH/2);
                 ctx.fillText("DMS", tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH/2);
 
-                // Dòng Latitude
                 ctx.textAlign = "left";
                 ctx.fillText("Latitude", tableX + Math.round(10 * scale), tableY + rowH + rowH/2);
                 ctx.textAlign = "center";
@@ -379,7 +375,6 @@
                 ctx.fillText(gpsData.latDec, tableX + colW1 + colW2/2, tableY + rowH + rowH/2);
                 ctx.fillText(gpsData.latDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH + rowH/2);
 
-                // Dòng Longitude
                 ctx.textAlign = "left";
                 ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
                 ctx.fillText("Longitude", tableX + Math.round(10 * scale), tableY + rowH*2 + rowH/2);
@@ -389,7 +384,6 @@
                 ctx.fillText(gpsData.lngDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH*2 + rowH/2);
             }
 
-            // Lưu ảnh thành phẩm
             saveFile(canvas.toDataURL('image/jpeg', 0.95), `NAM_A_GPS_${Date.now()}.jpg`);
         }
 
