@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NamA GPS Camera Pro</title>
+    <link rel="manifest" href="./manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -13,22 +14,33 @@
 
         .watermark-layer {
             position: absolute;
-            bottom: 12px;
-            left: 12px;
-            right: 12px;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(4px);
-            border-left: 4px solid #035835;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
             pointer-events: none;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end;
         }
-        .wm-info { display: flex; flex-direction: column; gap: 3px; }
-        .wm-logo img { max-height: 35px; max-width: 70px; object-fit: contain; }
+        .wm-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .wm-table-preview {
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            border-collapse: collapse;
+        }
+        .wm-table-preview th, .wm-table-preview td {
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 4px 8px;
+            text-align: center;
+        }
 
         .vertical-watermark-preview {
             position: absolute;
@@ -63,8 +75,7 @@
             font-size: 0.82rem;
             outline: none;
         }
-        .edit-icon { font-size: 1rem; cursor: pointer; opacity: 0.8; transition: 0.2s; }
-        .edit-icon:active { transform: scale(0.9); }
+        .edit-icon { font-size: 1rem; cursor: pointer; opacity: 0.8; }
 
         .toolbar-row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
         .btn-action-small { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 7px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -116,22 +127,36 @@
         <div id="uiVerticalText" class="vertical-watermark-preview">NAM A VALUATION</div>
 
         <div class="watermark-layer">
-            <div class="wm-info">
-                <div id="uiClient" style="display:none;"><b>KH:</b> <span></span></div>
-                <div id="uiNote" style="display:none;"><b>Ghi chú:</b> <span></span></div>
-                <div id="uiCoords"><b>GPS:</b> Đang lấy tọa độ...</div>
-                <div id="uiTime"><b>Thời gian:</b> --/--/---- --:--:--</div>
+            <div class="wm-left">
+                <div id="uiNoteDisplay">Máy nâng hạ</div>
+                <div id="uiTimeDisplay" style="font-size: 0.75rem; font-weight: normal; color: #ddd;">2026-11-09 11:41</div>
             </div>
-            <div class="wm-logo">
-                <img id="uiLogoImg" src="" style="display:none;">
+            <div>
+                <table class="wm-table-preview">
+                    <tr>
+                        <th></th>
+                        <th>Decimal</th>
+                        <th>DMS</th>
+                    </tr>
+                    <tr>
+                        <td><b>Latitude</b></td>
+                        <td id="uiLatDec">21.824019</td>
+                        <td id="uiLatDMS">21°49'26" N</td>
+                    </tr>
+                    <tr>
+                        <td><b>Longitude</b></td>
+                        <td id="uiLngDec">104.755827</td>
+                        <td id="uiLngDMS">104°45'20" E</td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>
 
     <div class="control-panel">
         <div class="note-field-group">
-            <input type="text" id="txtNote" placeholder="Nhập ghi chú hiện trường (Thửa đất, vị trí...)..." oninput="updateUI()">
-            <span class="edit-icon" onclick="document.getElementById('txtNote').focus()" title="Chỉnh sửa ghi chú">✏️</span>
+            <input type="text" id="txtNote" value="Máy nâng hạ" placeholder="Nhập ghi chú hiện trường..." oninput="updateUI()">
+            <span class="edit-icon" onclick="document.getElementById('txtNote').focus()">✏️</span>
         </div>
 
         <div class="toolbar-row">
@@ -174,7 +199,7 @@
 
     <script>
         let mediaStream = null;
-        let gpsInfo = { lat: "---", lng: "---", text: "Đang lấy tọa độ..." };
+        let gpsData = { latDec: "21.824019", latDMS: "21°49'26\" N", lngDec: "104.755827", lngDMS: "104°45'20\" E" };
         let logoImage = null;
         let currentMode = 'photo';
 
@@ -194,14 +219,36 @@
             }
         }
 
+        function toDMS(coordinate, isLat) {
+            const absolute = Math.abs(coordinate);
+            const degrees = Math.floor(absolute);
+            const minutesNotTruncated = (absolute - degrees) * 60;
+            const minutes = Math.floor(minutesNotTruncated);
+            const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(0);
+            let direction = "";
+            if (isLat) {
+                direction = coordinate >= 0 ? "N" : "S";
+            } else {
+                direction = coordinate >= 0 ? "E" : "W";
+            }
+            return `${degrees}°${minutes}'${seconds}" ${direction}`;
+        }
+
         function initGPS() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.watchPosition(pos => {
-                    gpsInfo.lat = pos.coords.latitude.toFixed(6);
-                    gpsInfo.lng = pos.coords.longitude.toFixed(6);
-                    gpsInfo.text = `${gpsInfo.lat}, ${gpsInfo.lng}`;
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    gpsData.latDec = lat.toFixed(6);
+                    gpsData.latDMS = toDMS(lat, true);
+                    gpsData.lngDec = lng.toFixed(6);
+                    gpsData.lngDMS = toDMS(lng, false);
+
+                    document.getElementById('uiLatDec').innerText = gpsData.latDec;
+                    document.getElementById('uiLatDMS').innerText = gpsData.latDMS;
+                    document.getElementById('uiLngDec').innerText = gpsData.lngDec;
+                    document.getElementById('uiLngDMS').innerText = gpsData.lngDMS;
                     document.getElementById('gpsStatus').innerText = "GPS: OK";
-                    updateUI();
                 }, err => {
                     document.getElementById('gpsStatus').innerText = "GPS: Lỗi";
                 }, { enableHighAccuracy: true });
@@ -210,26 +257,13 @@
 
         setInterval(() => {
             const now = new Date();
-            document.getElementById('uiTime').innerHTML = `<b>Thời gian:</b> ${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN')}`;
+            const timeString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} (Th ${now.getDay()===0?7:now.getDay()}) ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('uiTimeDisplay').innerText = timeString;
         }, 1000);
 
         function updateUI() {
-            const client = document.getElementById('txtClient').value.trim();
-            const note = document.getElementById('txtNote').value.trim();
-            const vText = document.getElementById('txtVerticalCopyright').value;
-            const showV = document.getElementById('chkVertical').checked;
-
-            const cBox = document.getElementById('uiClient');
-            cBox.style.display = client ? 'block' : 'none';
-            if(client) cBox.querySelector('span').innerText = client;
-
-            const nBox = document.getElementById('uiNote');
-            nBox.style.display = note ? 'block' : 'none';
-            if(note) nBox.querySelector('span').innerText = note;
-
-            const vElem = document.getElementById('uiVerticalText');
-            vElem.innerText = vText;
-            vElem.style.display = showV ? 'block' : 'none';
+            const note = document.getElementById('txtNote').value;
+            document.getElementById('uiNoteDisplay').innerText = note;
         }
 
         function loadLogo(e) {
@@ -239,11 +273,6 @@
                 reader.onload = evt => {
                     logoImage = new Image();
                     logoImage.src = evt.target.result;
-                    logoImage.onload = () => {
-                        const img = document.getElementById('uiLogoImg');
-                        img.src = evt.target.result;
-                        img.style.display = 'block';
-                    }
                 }
                 reader.readAsDataURL(file);
             }
@@ -259,66 +288,109 @@
         function takePhoto() {
             const video = document.getElementById('camVideo');
             const canvas = document.getElementById('camCanvas');
-            canvas.width = video.videoWidth || 1280;
-            canvas.height = video.videoHeight || 720;
+            canvas.width = video.videoWidth || 1920;
+            canvas.height = video.videoHeight || 1080;
             const ctx = canvas.getContext('2d');
 
-            // Vẽ khung hình camera chính lên canvas
+            // 1. Vẽ khung hình camera
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Vẽ chữ watermark dọc (nếu được bật)
+            const scale = canvas.width / 1000; // Tỉ lệ co giãn theo độ phân giải ảnh thực tế
+
+            // 2. Vẽ chữ bản quyền dọc bên phải (nếu bật)
             if(document.getElementById('chkVertical').checked) {
                 const vText = document.getElementById('txtVerticalCopyright').value;
                 ctx.save();
-                ctx.translate(canvas.width - 45, canvas.height / 2);
+                ctx.translate(canvas.width - (25 * scale), canvas.height / 2);
                 ctx.rotate(Math.PI / 2);
-                ctx.font = "bold 28px sans-serif";
+                ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
                 ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
                 ctx.textAlign = "center";
                 ctx.fillText(vText, 0, 0);
                 ctx.restore();
             }
 
-            // Vẽ khung thông tin nền mờ ở góc dưới
-            const pad = 35;
-            const boxH = 210;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-            ctx.fillRect(pad, canvas.height - boxH - pad, canvas.width - (pad * 2), boxH);
-            
-            ctx.fillStyle = "#035835"; // Màu thương hiệu Nam Á
-            ctx.fillRect(pad, canvas.height - boxH - pad, 12, boxH);
+            const pad = Math.round(30 * scale);
 
+            // 3. Vẽ phần thông tin bên trái (Tên ghi chú & Thời gian)
+            ctx.save();
+            ctx.font = `bold ${Math.round(36 * scale)}px sans-serif`;
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 26px sans-serif";
-            let curY = canvas.height - boxH - pad + 38;
+            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+            ctx.shadowBlur = 10;
+            
+            const noteVal = document.getElementById('txtNote').value;
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            let currentY = canvas.height - pad - Math.round(50 * scale);
+            ctx.fillText(noteVal, pad, currentY);
 
-            const clientVal = document.getElementById('txtClient').value.trim();
-            const noteVal = document.getElementById('txtNote').value.trim();
-            const timeStr = new Date().toLocaleString('vi-VN');
+            ctx.font = `${Math.round(24 * scale)}px sans-serif`;
+            ctx.fillStyle = "#dddddd";
+            ctx.fillText(timeStr, pad, currentY + Math.round(35 * scale));
+            ctx.restore();
 
-            if(clientVal) {
-                ctx.fillText(`Khách hàng: ${clientVal}`, pad + 30, curY);
-                curY += 35;
-            }
-            if(noteVal) {
-                ctx.fillText(`Ghi chú: ${noteVal}`, pad + 30, curY);
-                curY += 35;
-            }
+            // 4. Vẽ BẢNG TỌA ĐỘ NỀN ĐEN TUYỀN ở góc phải (giống hệt ảnh mẫu của anh)
             if(document.getElementById('chkCoords').checked) {
-                ctx.fillText(`Tọa độ: ${gpsInfo.text}`, pad + 30, curY);
-                curY += 35;
-            }
-            ctx.fillText(`Thời gian: ${timeStr}`, pad + 30, curY);
+                const tableW = Math.round(420 * scale);
+                const tableH = Math.round(140 * scale);
+                const tableX = canvas.width - pad - tableW;
+                const tableY = canvas.height - pad - tableH;
 
-            // Vẽ logo công ty lên góc phải bảng thông tin (nếu có tải lên)
-            if (logoImage) {
-                const lw = 140;
-                const lh = (logoImage.height / logoImage.width) * lw;
-                ctx.drawImage(logoImage, canvas.width - pad - lw - 25, canvas.height - boxH - pad + 30, lw, lh);
+                // Nền đen tuyền đặc (không bị trong suốt xám)
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(tableX, tableY, tableW, tableH);
+
+                // Viền bảng trắng mỏng
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(tableX, tableY, tableW, tableH);
+
+                // Chia cột và dòng trong bảng
+                const colW1 = Math.round(130 * scale);
+                const colW2 = Math.round(145 * scale);
+                const rowH = tableH / 3;
+
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+                // Đường dọc 1
+                ctx.beginPath(); ctx.moveTo(tableX + colW1, tableY); ctx.lineTo(tableX + colW1, tableY + tableH); ctx.stroke();
+                // Đường dọc 2
+                ctx.beginPath(); ctx.moveTo(tableX + colW1 + colW2, tableY); ctx.lineTo(tableX + colW1 + colW2, tableY + tableH); ctx.stroke();
+                // Đường ngang 1 & 2
+                ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH); ctx.lineTo(tableX + tableW, tableY + rowH); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH * 2); ctx.lineTo(tableX + tableW, tableY + rowH * 2); ctx.stroke();
+
+                // Chữ trong bảng
+                ctx.fillStyle = "#ffffff";
+                ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                // Tiêu đề cột
+                ctx.fillText("Decimal", tableX + colW1 + colW2/2, tableY + rowH/2);
+                ctx.fillText("DMS", tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH/2);
+
+                // Dòng Latitude
+                ctx.textAlign = "left";
+                ctx.fillText("Latitude", tableX + Math.round(10 * scale), tableY + rowH + rowH/2);
+                ctx.textAlign = "center";
+                ctx.font = `${Math.round(18 * scale)}px sans-serif`;
+                ctx.fillText(gpsData.latDec, tableX + colW1 + colW2/2, tableY + rowH + rowH/2);
+                ctx.fillText(gpsData.latDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH + rowH/2);
+
+                // Dòng Longitude
+                ctx.textAlign = "left";
+                ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
+                ctx.fillText("Longitude", tableX + Math.round(10 * scale), tableY + rowH*2 + rowH/2);
+                ctx.textAlign = "center";
+                ctx.font = `${Math.round(18 * scale)}px sans-serif`;
+                ctx.fillText(gpsData.lngDec, tableX + colW1 + colW2/2, tableY + rowH*2 + rowH/2);
+                ctx.fillText(gpsData.lngDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH*2 + rowH/2);
             }
 
-            // Lưu thành phẩm duy nhất có đầy đủ watermark chuyên nghiệp
-            saveFile(canvas.toDataURL('image/jpeg', 0.95), `NAMA_GPS_${Date.now()}.jpg`);
+            // Lưu ảnh thành phẩm
+            saveFile(canvas.toDataURL('image/jpeg', 0.95), `NAM_A_GPS_${Date.now()}.jpg`);
         }
 
         function saveFile(url, filename) {
