@@ -17,7 +17,6 @@
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
         canvas { display: none; }
 
-        /* Khung hiển thị Watermark trực tiếp trên màn hình camera */
         .watermark-layer {
             position: absolute;
             bottom: 20px;
@@ -42,14 +41,14 @@
 
         .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
         
-        /* Ô nhập ghi chú nhanh có hình cây bút ở cuối dòng */
+        /* Ô nhập ghi chú chuẩn tương tác bút */
         .note-field-group {
             display: flex;
             align-items: center;
             background: #222;
-            border: 1px solid #444;
+            border: 1px solid #555;
             border-radius: 6px;
-            padding: 2px 8px;
+            padding: 2px 10px;
             gap: 8px;
         }
         .note-field-group input {
@@ -57,16 +56,15 @@
             background: transparent;
             border: none;
             color: #fff;
-            padding: 6px 0;
-            font-size: 0.82rem;
+            padding: 8px 0;
+            font-size: 0.85rem;
             outline: none;
         }
-        .edit-icon { font-size: 1rem; cursor: pointer; opacity: 0.9; }
+        .edit-icon { font-size: 1.1rem; cursor: pointer; padding: 4px; }
 
         .toolbar-row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
         .btn-action-small { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 7px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         
-        /* Modal Chỉnh sửa mẫu chuẩn phong cách App Pro */
         #templateModal {
             display: none;
             position: fixed;
@@ -129,7 +127,7 @@
                 <img id="uiLogo" class="wm-logo-img" alt="Logo">
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 12:45</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 12:50</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                 <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
@@ -137,10 +135,10 @@
     </div>
 
     <div class="control-panel">
-        <!-- Ô nhập ghi chú nhanh có hình cây bút ở cuối dòng -->
+        <!-- Ô nhập ghi chú nhanh có cây bút bấm vào là focus sửa ngay -->
         <div class="note-field-group">
             <input type="text" id="txtNoteQuick" value="Khảo sát hiện trạng thiết bị" placeholder="Nhập ghi chú hiện trường..." oninput="syncNoteInput(this)">
-            <span class="edit-icon" onclick="document.getElementById('txtNoteQuick').focus()">✏️</span>
+            <span class="edit-icon" onclick="focusNoteInput()" title="Sửa ghi chú">✏️</span>
         </div>
 
         <div class="toolbar-row">
@@ -154,7 +152,7 @@
             
             <div class="mode-tabs">
                 <button class="tab-btn active" onclick="switchMode('photo', event)">Ảnh</button>
-                <button class="tab-btn" onclick="switchMode('video', event)">Video</button>
+                <button class="tab-btn" onclick="switchMode('video', event)">Quay Phim</button>
             </div>
 
             <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
@@ -214,7 +212,6 @@
         let currentMode = 'photo';
         let currentAddress = "QL37, Âu Lâu, Lào Cai";
 
-        // Khôi phục logo đã lưu từ LocalStorage nếu có
         window.addEventListener('DOMContentLoaded', () => {
             const savedLogo = localStorage.getItem('nama_saved_logo');
             if (savedLogo) {
@@ -230,6 +227,12 @@
 
         function openTemplateModal() { document.getElementById('templateModal').style.display = 'flex'; }
         function closeTemplateModal() { document.getElementById('templateModal').style.display = 'none'; }
+
+        function focusNoteInput() {
+            const inputField = document.getElementById('txtNoteQuick');
+            inputField.focus();
+            inputField.select();
+        }
 
         async function initCamera() {
             try {
@@ -320,7 +323,6 @@
                     logoImage.onload = () => {
                         document.getElementById('uiLogo').src = base64Str;
                         updateUI();
-                        // Lưu vĩnh viễn vào bộ nhớ trình duyệt
                         try {
                             localStorage.setItem('nama_saved_logo', base64Str);
                         } catch(err) {
