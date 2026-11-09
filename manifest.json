@@ -5,13 +5,12 @@
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#035835",
-  "orientation": "any",
+  "description": "Ứng dụng camera khảo sát hiện trạng chuyên nghiệp cho Nam A Valuation",
   "icons": [
     {
-      "src": "icon.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "https://ngocnamyb-lab.github.io/namacamera/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
     }
   ]
 }
