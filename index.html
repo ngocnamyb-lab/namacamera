@@ -162,9 +162,8 @@
 
         <div class="toolbar-row">
             <button class="btn-action-small" onclick="openSettings()">⚙️ Cài đặt chung & Bản quyền</button>
-            <label class="btn-action-small">
-                📁 Chọn Logo <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
-            </label>
+            <button class="btn-action-small" onclick="document.getElementById('fileLogo').click()">📁 Chọn Logo</button>
+            <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
         </div>
 
         <div class="settings-row">
@@ -293,12 +292,10 @@
             canvas.height = video.videoHeight || 1080;
             const ctx = canvas.getContext('2d');
 
-            // 1. Vẽ khung hình camera
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             const scale = canvas.width / 1000;
 
-            // 2. Vẽ chữ bản quyền dọc bên phải
             if(document.getElementById('chkVertical').checked) {
                 const vText = document.getElementById('txtVerticalCopyright').value;
                 ctx.save();
@@ -313,7 +310,6 @@
 
             const pad = Math.round(30 * scale);
 
-            // 3. Vẽ thông tin bên trái
             ctx.save();
             ctx.font = `bold ${Math.round(36 * scale)}px sans-serif`;
             ctx.fillStyle = "#ffffff";
@@ -332,23 +328,19 @@
             ctx.fillText(timeStr, pad, currentY + Math.round(35 * scale));
             ctx.restore();
 
-            // 4. Vẽ BẢNG TỌA ĐỘ NỀN TRONG SUỐT (mờ đục 55%) ở góc phải
             if(document.getElementById('chkCoords').checked) {
                 const tableW = Math.round(420 * scale);
                 const tableH = Math.round(140 * scale);
                 const tableX = canvas.width - pad - tableW;
                 const tableY = canvas.height - pad - tableH;
 
-                // Nền đen trong suốt (rgba với độ mờ 0.55)
                 ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
                 ctx.fillRect(tableX, tableY, tableW, tableH);
 
-                // Viền bảng trắng
                 ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(tableX, tableY, tableW, tableH);
 
-                // Chia cột và dòng
                 const colW1 = Math.round(130 * scale);
                 const colW2 = Math.round(145 * scale);
                 const rowH = tableH / 3;
@@ -359,7 +351,6 @@
                 ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH); ctx.lineTo(tableX + tableW, tableY + rowH); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH * 2); ctx.lineTo(tableX + tableW, tableY + rowH * 2); ctx.stroke();
 
-                // Chữ trong bảng
                 ctx.fillStyle = "#ffffff";
                 ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
                 ctx.textAlign = "center";
