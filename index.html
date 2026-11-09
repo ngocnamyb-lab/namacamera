@@ -21,6 +21,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
+            z-index: 5;
         }
         .wm-left {
             display: flex;
@@ -54,9 +55,10 @@
             letter-spacing: 2px;
             pointer-events: none;
             white-space: nowrap;
+            z-index: 5;
         }
 
-        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; }
+        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; }
         
         .note-field-group {
             display: flex;
@@ -122,7 +124,7 @@
 <body>
 
     <div class="camera-viewport" id="viewport">
-        <video id="camVideo" autoplay playsinline></video>
+        <video id="camVideo" autoplay playsinline muted></video>
         <canvas id="camCanvas" style="display:none;"></canvas>
 
         <div id="uiVerticalText" class="vertical-watermark-preview">NAM A VALUATION</div>
@@ -130,7 +132,7 @@
         <div class="watermark-layer">
             <div class="wm-left">
                 <div id="uiNoteDisplay">Máy nâng hạ</div>
-                <div id="uiTimeDisplay" style="font-size: 0.75rem; font-weight: normal; color: #ddd;">2026-11-09 11:41</div>
+                <div id="uiTimeDisplay" style="font-size: 0.75rem; font-weight: normal; color: #ddd;">2026-11-09 12:00</div>
             </div>
             <div>
                 <table class="wm-table-preview">
@@ -141,13 +143,13 @@
                     </tr>
                     <tr>
                         <td><b>Latitude</b></td>
-                        <td id="uiLatDec">21.824019</td>
-                        <td id="uiLatDMS">21°49'26" N</td>
+                        <td id="uiLatDec">21.695105</td>
+                        <td id="uiLatDMS">21°41'42" N</td>
                     </tr>
                     <tr>
                         <td><b>Longitude</b></td>
-                        <td id="uiLngDec">104.755827</td>
-                        <td id="uiLngDMS">104°45'20" E</td>
+                        <td id="uiLngDec">104.846247</td>
+                        <td id="uiLngDMS">104°50'46" E</td>
                     </tr>
                 </table>
             </div>
@@ -199,7 +201,7 @@
 
     <script>
         let mediaStream = null;
-        let gpsData = { latDec: "21.824019", latDMS: "21°49'26\" N", lngDec: "104.755827", lngDMS: "104°45'20\" E" };
+        let gpsData = { latDec: "21.695105", latDMS: "21°41'42\" N", lngDec: "104.846247", lngDMS: "104°50'46\" E" };
         let logoImage = null;
         let currentMode = 'photo';
 
@@ -209,13 +211,26 @@
         async function initCamera() {
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+                
+                // Cấu hình linh động tương thích mọi điện thoại
+                const constraints = {
+                    video: { facingMode: "environment" },
                     audio: currentMode === 'video'
-                });
-                document.getElementById('camVideo').srcObject = mediaStream;
+                };
+                
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('camVideo');
+                videoElement.srcObject = mediaStream;
+                await videoElement.play();
             } catch (err) {
                 console.log("Lỗi mở camera: " + err.message);
+                // Fallback nếu lỗi camera sau
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    document.getElementById('camVideo').srcObject = mediaStream;
+                } catch(e) {
+                    alert("Không thể mở camera. Vui lòng kiểm tra quyền truy cập trình duyệt!");
+                }
             }
         }
 
