@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NamA GPS Camera Pro v5</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>NamA GPS Camera Pro</title>
     <link rel="manifest" href="./manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
         html, body { width: 100vw; height: 100vh; background: #000; color: #fff; display: flex; flex-direction: column; overflow: hidden; position: fixed; }
 
-        .top-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(0,0,0,0.6); z-index: 10; font-size: 0.8rem; flex-shrink: 0; }
+        .top-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(0,0,0,0.8); z-index: 10; font-size: 0.8rem; flex-shrink: 0; }
         .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.75rem; }
 
         .camera-viewport { position: relative; flex-grow: 1; width: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
@@ -143,7 +145,7 @@
                 <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 13:25</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 13:35</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                 <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
@@ -337,7 +339,6 @@
             const showNote = document.getElementById('chkNote').checked;
             const noteVal = document.getElementById('txtNoteQuick').value;
 
-            // Nếu bật logo và đã có logo, ẩn badge vàng và hiện logo thay thế vị trí đó
             if (showLogo && logoImage.src) {
                 document.getElementById('uiLogo').style.display = 'inline-block';
                 document.getElementById('uiBadge').style.display = 'none';
@@ -393,7 +394,7 @@
             const scale = canvas.width / 1000;
             const pad = Math.round(30 * scale);
 
-            // Vẽ chữ dọc bản quyền cách lề phải chuẩn khoảng 2 li (khoảng 15px theo tỷ lệ)
+            // Vẽ chữ dọc bản quyền cách lề phải chuẩn khoảng 2 li
             ctx.save();
             const vText = document.getElementById('txtVerticalCopyright').value;
             const vColorHex = document.getElementById('verticalColor').value;
@@ -402,7 +403,7 @@
             let vg = parseInt(vColorHex.slice(3, 5), 16) || 255;
             let vb = parseInt(vColorHex.slice(5, 7), 16) || 255;
 
-            ctx.translate(canvas.width - Math.round(20 * scale), canvas.height / 2);
+            ctx.translate(canvas.width - Math.round(15 * scale), canvas.height / 2);
             ctx.rotate(Math.PI / 2);
             ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
             ctx.fillStyle = `rgba(${vr}, ${vg}, ${vb}, ${vAlpha})`;
@@ -430,14 +431,13 @@
             
             ctx.font = `bold ${Math.round(28 * scale)}px sans-serif`;
 
-            // Nếu có logo, vẽ logo thay thế chỗ chữ điểm danh
             if (showLogo && logoImage.src) {
                 const lw = Math.round(100 * scale);
                 const lh = (logoImage.height / logoImage.width) * lw;
                 ctx.drawImage(logoImage, pad + Math.round(20 * scale), currentY - Math.round(24 * scale), lw, lh);
                 
                 ctx.fillStyle = "#ffffff";
-                ctx.fillText(titleText, pad + Math.round(140 * scale), currentY);
+                ctx.fillText(titleText, pad + Math.round(130 * scale), currentY);
             } else if (badgeText) {
                 ctx.fillStyle = "#ffcc00";
                 ctx.fillText(badgeText, pad + Math.round(20 * scale), currentY);
