@@ -9,125 +9,79 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
+        .top-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.6); z-index: 10; font-size: 0.85rem; }
+        .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 5px 10px; border-radius: 15px; cursor: pointer; font-size: 0.75rem; }
+
         .camera-viewport { position: relative; flex-grow: 1; width: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
         canvas { display: none; }
 
+        /* Khung hiển thị Watermark trực tiếp trên màn hình camera */
         .watermark-layer {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             left: 15px;
             right: 15px;
             pointer-events: none;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            z-index: 3;
-        }
-        .wm-left {
-            display: flex;
             flex-direction: column;
-            gap: 4px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-        }
-        .wm-right-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .wm-logo-preview {
-            max-height: 45px;
-            max-width: 70px;
-            object-fit: contain;
-            display: none;
-            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8));
-        }
-        .wm-table-preview {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            font-size: 0.75rem;
-            border-collapse: collapse;
-        }
-        .wm-table-preview th, .wm-table-preview td {
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 4px 8px;
-            text-align: center;
-        }
-
-        .vertical-watermark-preview {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%) rotate(90deg);
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.35);
-            font-weight: bold;
-            letter-spacing: 2px;
-            pointer-events: none;
-            white-space: nowrap;
+            gap: 6px;
             z-index: 3;
+            background: rgba(0, 0, 0, 0.65);
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
         }
-
-        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
+        .wm-header-row { display: flex; align-items: center; gap: 8px; }
+        .wm-badge { background: #ffcc00; color: #000; font-weight: bold; padding: 2px 8px; font-size: 0.8rem; border-radius: 3px; }
+        .wm-title-text { font-size: 1.1rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+        .wm-logo-img { max-height: 30px; max-width: 80px; object-fit: contain; display: none; }
         
-        .note-field-group {
-            display: flex;
-            align-items: center;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 6px;
-            padding: 2px 8px;
-            gap: 8px;
-        }
-        .note-field-group input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #fff;
-            padding: 8px 0;
-            font-size: 0.82rem;
-            outline: none;
-        }
-        .edit-icon { font-size: 1rem; cursor: pointer; opacity: 0.8; }
+        .wm-details { font-size: 0.78rem; color: #ddd; display: flex; flex-direction: column; gap: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
+        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
+        
         .toolbar-row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
-        .btn-action-small { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 7px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .btn-action-small { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 7px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         
-        #settingsModal {
+        /* Modal Chỉnh sửa mẫu chuẩn phong cách App Pro */
+        #templateModal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             z-index: 99;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            justify-content: flex-end;
+            flex-direction: column;
         }
         .modal-content {
             background: #1e1e1e;
             width: 100%;
-            max-width: 400px;
+            max-height: 85vh;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
             padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #444;
             display: flex;
             flex-direction: column;
             gap: 12px;
+            overflow-y: auto;
         }
-        .modal-content h3 { font-size: 0.95rem; color: #035835; margin-bottom: 5px; }
-        .modal-content label { font-size: 0.75rem; color: #aaa; display: flex; flex-direction: column; gap: 4px; }
-        .modal-content input { background: #2a2a2a; border: 1px solid #555; color: #fff; padding: 8px; border-radius: 6px; font-size: 0.85rem; }
-        .btn-close-modal { background: #035835; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .modal-header h3 { font-size: 1rem; color: #fff; }
+        .modal-close { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; }
 
-        .settings-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #aaa; padding: 0 4px; align-items: center; }
-        .settings-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500; color: #ddd; }
-        .settings-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #035835; cursor: pointer; }
+        .toggle-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; }
+        .toggle-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: #035835; cursor: pointer; }
+        .toggle-item input[type="text"] { background: #333; border: 1px solid #555; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; outline: none; width: 140px; }
+        .toggle-item input[type="color"] { background: none; border: none; width: 35px; height: 25px; cursor: pointer; }
+        .toggle-item input[type="range"] { accent-color: #035835; cursor: pointer; width: 120px; }
 
-        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+        .btn-done { background: #035835; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; margin-top: 10px; }
+
+        .action-bar { display: flex; justify-content: space-between; align-items: center; }
+        .thumbnail-preview { width: 45px; height: 45px; border-radius: 6px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
+        
         .btn-capture { width: 60px; height: 60px; border-radius: 50%; background: #fff; border: 4px solid #035835; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
         .btn-capture:active { transform: scale(0.92); }
 
@@ -138,91 +92,109 @@
 </head>
 <body>
 
+    <div class="top-header">
+        <span id="gpsStatus" style="color: #4cd964;">📍 GPS: Đang định vị...</span>
+        <button onclick="openTemplateModal()">⚙️ Chỉnh sửa mẫu</button>
+    </div>
+
     <div class="camera-viewport" id="viewport">
         <video id="camVideo" autoplay playsinline muted></video>
         <canvas id="camCanvas"></canvas>
 
-        <div id="uiVerticalText" class="vertical-watermark-preview">NAM A VALUATION</div>
-
-        <div class="watermark-layer">
-            <div class="wm-left">
-                <div id="uiNoteDisplay">Máy nâng hạ</div>
-                <div id="uiTimeDisplay" style="font-size: 0.75rem; font-weight: normal; color: #ddd;">2026-11-09 12:00</div>
+        <!-- Khung hiển thị watermark theo mẫu -->
+        <div class="watermark-layer" id="watermarkLayer">
+            <div class="wm-header-row">
+                <span id="uiBadge" class="wm-badge">Điểm danh</span>
+                <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
+                <img id="uiLogo" class="wm-logo-img" alt="Logo">
             </div>
-            <div class="wm-right-container">
-                <img id="uiLogoImg" class="wm-logo-preview" alt="Logo">
-                <table id="uiTableCoords" class="wm-table-preview">
-                    <tr>
-                        <th></th>
-                        <th>Decimal</th>
-                        <th>DMS</th>
-                    </tr>
-                    <tr>
-                        <td><b>Latitude</b></td>
-                        <td id="uiLatDec">21.695105</td>
-                        <td id="uiLatDMS">21°41'42" N</td>
-                    </tr>
-                    <tr>
-                        <td><b>Longitude</b></td>
-                        <td id="uiLngDec">104.846247</td>
-                        <td id="uiLngDMS">104°50'46" E</td>
-                    </tr>
-                </table>
+            <div class="wm-details">
+                <div id="uiTime">Thứ Hai, 09/11/2026 12:30</div>
+                <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
+                <div id="uiNote">Ghi chú: Khảo sát hiện trạng thiết bị</div>
             </div>
         </div>
     </div>
 
     <div class="control-panel">
-        <div class="note-field-group">
-            <input type="text" id="txtNote" value="Máy nâng hạ" placeholder="Nhập ghi chú hiện trường..." oninput="updateUI()">
-            <span class="edit-icon" onclick="document.getElementById('txtNote').focus()">✏️</span>
-        </div>
-
         <div class="toolbar-row">
-            <button class="btn-action-small" onclick="openSettings()">⚙️ Cài đặt chung</button>
-            <button class="btn-action-small" onclick="document.getElementById('fileLogo').click()">📁 Chọn Logo</button>
+            <button class="btn-action-small" onclick="document.getElementById('fileLogo').click()">📁 Tải Logo lên</button>
             <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
-        </div>
-
-        <div class="settings-row">
-            <label><input type="checkbox" id="chkVertical" checked onchange="updateUI()"> Hiện chữ dọc</label>
-            <label><input type="checkbox" id="chkCoords" checked onchange="updateUI()"> Tọa độ</label>
-            <span id="gpsStatus" style="color: #4cd964;">GPS: Sẵn sàng</span>
+            <span style="font-size: 0.75rem; color: #aaa;" id="logoName">Chưa chọn logo</span>
         </div>
 
         <div class="action-bar">
+            <!-- Nút xem ảnh vừa chụp (Thumbnail) -->
+            <img id="thumbPreview" class="thumbnail-preview" onclick="openLastPhoto()" alt="Ảnh chụp">
+            
             <div class="mode-tabs">
-                <button class="tab-btn active" onclick="switchMode('photo', event)">Chụp Ảnh</button>
-                <button class="tab-btn" onclick="switchMode('video', event)">Quay Phim</button>
+                <button class="tab-btn active" onclick="switchMode('photo', event)">Ảnh</button>
+                <button class="tab-btn" onclick="switchMode('video', event)">Video</button>
             </div>
+
             <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
             <div style="font-size: 0.7rem; color: #888;" id="timerDisplay">00:00</div>
         </div>
     </div>
 
-    <div id="settingsModal">
+    <!-- Modal Chỉnh sửa mẫu (Templates Settings) -->
+    <div id="templateModal">
         <div class="modal-content">
-            <h3>Cài đặt Tên Khách Hàng & Bản Quyền</h3>
-            <label>
-                Tên khách hàng / Chủ tài sản:
-                <input type="text" id="txtClient" placeholder="Nhập tên khách hàng..." oninput="updateUI()">
-            </label>
-            <label>
-                Chữ bản quyền dọc trên ảnh:
-                <input type="text" id="txtVerticalCopyright" value="NAM A VALUATION APP" placeholder="Nội dung chữ dọc..." oninput="updateUI()">
-            </label>
-            <button class="btn-close-modal" onclick="closeSettings()">Lưu & Đóng</button>
+            <div class="modal-header">
+                <h3>Chỉnh sửa mẫu hiển thị</h3>
+                <button class="modal-close" onclick="closeTemplateModal()">✕</button>
+            </div>
+
+            <div class="toggle-item">
+                <label>Màu nền bảng (Background)</label>
+                <input type="color" id="bgColor" value="#000000" onchange="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Độ trong suốt nền (<span id="opacityVal">65</span>%)</label>
+                <input type="range" id="bgOpacity" min="0" max="100" value="65" oninput="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Hiển thị Logo</label>
+                <input type="checkbox" id="chkLogo" checked onchange="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Nhãn (Badge)</label>
+                <input type="text" id="txtBadge" value="Điểm danh" oninput="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Tiêu đề chính</label>
+                <input type="text" id="txtTitle" value="Máy nâng hạ" oninput="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Hiển thị Thời gian</label>
+                <input type="checkbox" id="chkTime" checked onchange="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Hiển thị Vị trí GPS</label>
+                <input type="checkbox" id="chkLocation" checked onchange="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Hiển thị Ghi chú</label>
+                <input type="checkbox" id="chkNote" checked onchange="updateUI()">
+            </div>
+            <div class="toggle-item">
+                <label>Nội dung ghi chú</label>
+                <input type="text" id="txtNoteContent" value="Khảo sát hiện trạng thiết bị" oninput="updateUI()">
+            </div>
+
+            <button class="btn-done" onclick="closeTemplateModal()">Xong & Lưu mẫu</button>
         </div>
     </div>
 
     <script>
         let mediaStream = null;
-        let gpsData = { latDec: "21.695105", latDMS: "21°41'42\" N", lngDec: "104.846247", lngDMS: "104°50'46\" E" };
         let logoImage = null;
+        let lastPhotoUrl = null;
         let currentMode = 'photo';
+        let currentAddress = "QL37, Âu Lâu, Lào Cai";
 
-        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
-        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        function openTemplateModal() { document.getElementById('templateModal').style.display = 'flex'; }
+        function closeTemplateModal() { document.getElementById('templateModal').style.display = 'none'; }
 
         async function initCamera() {
             try {
@@ -237,23 +209,10 @@
             } catch (err) {
                 try {
                     mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                    const videoElement = document.getElementById('camVideo');
-                    videoElement.srcObject = mediaStream;
-                    await videoElement.play();
-                } catch(e) {
-                    console.log("Lỗi camera: " + e.message);
-                }
+                    document.getElementById('camVideo').srcObject = mediaStream;
+                    await document.getElementById('camVideo').play();
+                } catch(e) { console.log(e); }
             }
-        }
-
-        function toDMS(coordinate, isLat) {
-            const absolute = Math.abs(coordinate);
-            const degrees = Math.floor(absolute);
-            const minutesNotTruncated = (absolute - degrees) * 60;
-            const minutes = Math.floor(minutesNotTruncated);
-            const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(0);
-            let direction = isLat ? (coordinate >= 0 ? "N" : "S") : (coordinate >= 0 ? "E" : "W");
-            return `${degrees}°${minutes}'${seconds}" ${direction}`;
         }
 
         function initGPS() {
@@ -261,49 +220,68 @@
                 navigator.geolocation.watchPosition(pos => {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
-                    gpsData.latDec = lat.toFixed(6);
-                    gpsData.latDMS = toDMS(lat, true);
-                    gpsData.lngDec = lng.toFixed(6);
-                    gpsData.lngDMS = toDMS(lng, false);
-
-                    document.getElementById('uiLatDec').innerText = gpsData.latDec;
-                    document.getElementById('uiLatDMS').innerText = gpsData.latDMS;
-                    document.getElementById('uiLngDec').innerText = gpsData.lngDec;
-                    document.getElementById('uiLngDMS').innerText = gpsData.lngDMS;
-                    document.getElementById('gpsStatus').innerText = "GPS: OK";
+                    currentAddress = `Tọa độ: ${lat.toFixed(6)}°N, ${lng.toFixed(6)}°E`;
+                    document.getElementById('uiLocation').innerText = currentAddress;
+                    document.getElementById('gpsStatus').innerText = "📍 GPS: Đã sẵn sàng";
                 }, err => {
-                    document.getElementById('gpsStatus').innerText = "GPS: Lỗi";
+                    document.getElementById('gpsStatus').innerText = "📍 GPS: Dùng mặc định";
                 }, { enableHighAccuracy: true });
             }
         }
 
         setInterval(() => {
             const now = new Date();
-            const timeString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} (Th ${now.getDay()===0?7:now.getDay()}) ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            document.getElementById('uiTimeDisplay').innerText = timeString;
+            const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+            const timeStr = `${days[now.getDay()]}, ${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('uiTime').innerText = timeStr;
         }, 1000);
 
-        function updateUI() {
-            // Xử lý ẩn hiện chữ dọc trực tiếp
-            const showVertical = document.getElementById('chkVertical').checked;
-            document.getElementById('uiVerticalText').style.display = showVertical ? 'block' : 'none';
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16) || 0;
+            let g = parseInt(hex.slice(3, 5), 16) || 0;
+            let b = parseInt(hex.slice(5, 7), 16) || 0;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
 
-            // Xử lý ẩn hiện bảng tọa độ trực tiếp
-            const showCoords = document.getElementById('chkCoords').checked;
-            document.getElementById('uiTableCoords').style.display = showCoords ? 'table' : 'none';
+        function updateUI() {
+            const hexColor = document.getElementById('bgColor').value;
+            const opacityPercent = document.getElementById('bgOpacity').value;
+            document.getElementById('opacityVal').innerText = opacityPercent;
+            const alpha = opacityPercent / 100;
+
+            const rgbaStr = hexToRgba(hexColor, alpha);
+            document.getElementById('watermarkLayer').style.background = rgbaStr;
+
+            const showLogo = document.getElementById('chkLogo').checked;
+            const badgeVal = document.getElementById('txtBadge').value;
+            const titleVal = document.getElementById('txtTitle').value;
+            const showTime = document.getElementById('chkTime').checked;
+            const showLoc = document.getElementById('chkLocation').checked;
+            const showNote = document.getElementById('chkNote').checked;
+            const noteVal = document.getElementById('txtNoteContent').value;
+
+            document.getElementById('uiBadge').style.display = badgeVal ? 'inline-block' : 'none';
+            document.getElementById('uiBadge').innerText = badgeVal;
+            document.getElementById('uiTitle').innerText = titleVal;
+            document.getElementById('uiLogo').style.display = (showLogo && logoImage) ? 'block' : 'none';
+
+            document.getElementById('uiTime').style.display = showTime ? 'block' : 'none';
+            document.getElementById('uiLocation').style.display = showLoc ? 'block' : 'none';
+            document.getElementById('uiNote').style.display = showNote ? 'block' : 'none';
+            document.getElementById('uiNote').innerText = noteVal;
         }
 
         function loadLogo(e) {
             const file = e.target.files[0];
             if (file) {
+                document.getElementById('logoName').innerText = file.name;
                 const reader = new FileReader();
                 reader.onload = evt => {
                     logoImage = new Image();
                     logoImage.src = evt.target.result;
                     logoImage.onload = () => {
-                        const logoPreview = document.getElementById('uiLogoImg');
-                        logoPreview.src = evt.target.result;
-                        logoPreview.style.display = 'block';
+                        document.getElementById('uiLogo').src = evt.target.result;
+                        updateUI();
                     }
                 }
                 reader.readAsDataURL(file);
@@ -325,101 +303,73 @@
             const ctx = canvas.getContext('2d');
 
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
             const scale = canvas.width / 1000;
-
-            // Kiểm tra trạng thái checkbox chữ dọc khi chụp
-            if(document.getElementById('chkVertical').checked) {
-                const vText = document.getElementById('txtVerticalCopyright').value || "NAM A VALUATION APP";
-                ctx.save();
-                ctx.translate(canvas.width - (25 * scale), canvas.height / 2);
-                ctx.rotate(Math.PI / 2);
-                ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
-                ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-                ctx.textAlign = "center";
-                ctx.fillText(vText, 0, 0);
-                ctx.restore();
-            }
-
             const pad = Math.round(30 * scale);
 
             ctx.save();
-            ctx.font = `bold ${Math.round(36 * scale)}px sans-serif`;
-            ctx.fillStyle = "#ffffff";
-            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-            ctx.shadowBlur = 10;
-            
-            const noteVal = document.getElementById('txtNote').value;
-            const now = new Date();
-            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            
-            let currentY = canvas.height - pad - Math.round(50 * scale);
-            ctx.fillText(noteVal, pad, currentY);
+            const hexColor = document.getElementById('bgColor').value;
+            const alpha = document.getElementById('bgOpacity').value / 100;
+            let r = parseInt(hexColor.slice(1, 3), 16) || 0;
+            let g = parseInt(hexColor.slice(3, 5), 16) || 0;
+            let b = parseInt(hexColor.slice(5, 7), 16) || 0;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
-            ctx.font = `${Math.round(24 * scale)}px sans-serif`;
+            const boxH = Math.round(180 * scale);
+            ctx.fillRect(pad, canvas.height - pad - boxH, canvas.width - (pad * 2), boxH);
+
+            let currentY = canvas.height - pad - boxH + Math.round(30 * scale);
+
+            const badgeText = document.getElementById('txtBadge').value;
+            const titleText = document.getElementById('txtTitle').value;
+            
+            ctx.font = `bold ${Math.round(28 * scale)}px sans-serif`;
+            if (badgeText) {
+                ctx.fillStyle = "#ffcc00";
+                ctx.fillText(badgeText, pad + Math.round(20 * scale), currentY);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(titleText, pad + Math.round(150 * scale), currentY);
+            } else {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(titleText, pad + Math.round(20 * scale), currentY);
+            }
+
+            currentY += Math.round(45 * scale);
+            ctx.font = `${Math.round(22 * scale)}px sans-serif`;
             ctx.fillStyle = "#dddddd";
-            ctx.fillText(timeStr, pad, currentY + Math.round(35 * scale));
+
+            if (document.getElementById('chkTime').checked) {
+                ctx.fillText(document.getElementById('uiTime').innerText, pad + Math.round(20 * scale), currentY);
+                currentY += Math.round(35 * scale);
+            }
+            if (document.getElementById('chkLocation').checked) {
+                ctx.fillText(document.getElementById('uiLocation').innerText, pad + Math.round(20 * scale), currentY);
+                currentY += Math.round(35 * scale);
+            }
+            if (document.getElementById('chkNote').checked) {
+                ctx.fillText(document.getElementById('txtNoteContent').value, pad + Math.round(20 * scale), currentY);
+            }
+
+            if (document.getElementById('chkLogo').checked && logoImage) {
+                const lw = Math.round(120 * scale);
+                const lh = (logoImage.height / logoImage.width) * lw;
+                ctx.drawImage(logoImage, canvas.width - pad - lw - Math.round(20 * scale), canvas.height - pad - boxH + Math.round(20 * scale), lw, lh);
+            }
             ctx.restore();
 
-            let tableW = 0;
-            // Kiểm tra trạng thái checkbox tọa độ khi chụp
-            if(document.getElementById('chkCoords').checked) {
-                tableW = Math.round(420 * scale);
-                const tableH = Math.round(140 * scale);
-                const tableX = canvas.width - pad - tableW;
-                const tableY = canvas.height - pad - tableH;
+            lastPhotoUrl = canvas.toDataURL('image/jpeg', 0.95);
+            
+            const thumb = document.getElementById('thumbPreview');
+            thumb.src = lastPhotoUrl;
+            thumb.style.display = 'block';
 
-                ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-                ctx.fillRect(tableX, tableY, tableW, tableH);
+            saveFile(lastPhotoUrl, `NAM_A_${Date.now()}.jpg`);
+        }
 
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(tableX, tableY, tableW, tableH);
-
-                const colW1 = Math.round(130 * scale);
-                const colW2 = Math.round(145 * scale);
-                const rowH = tableH / 3;
-
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-                ctx.beginPath(); ctx.moveTo(tableX + colW1, tableY); ctx.lineTo(tableX + colW1, tableY + tableH); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(tableX + colW1 + colW2, tableY); ctx.lineTo(tableX + colW1 + colW2, tableY + tableH); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH); ctx.lineTo(tableX + tableW, tableY + rowH); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(tableX, tableY + rowH * 2); ctx.lineTo(tableX + tableW, tableY + rowH * 2); ctx.stroke();
-
-                ctx.fillStyle = "#ffffff";
-                ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-
-                ctx.fillText("Decimal", tableX + colW1 + colW2/2, tableY + rowH/2);
-                ctx.fillText("DMS", tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH/2);
-
-                ctx.textAlign = "left";
-                ctx.fillText("Latitude", tableX + Math.round(10 * scale), tableY + rowH + rowH/2);
-                ctx.textAlign = "center";
-                ctx.font = `${Math.round(18 * scale)}px sans-serif`;
-                ctx.fillText(gpsData.latDec, tableX + colW1 + colW2/2, tableY + rowH + rowH/2);
-                ctx.fillText(gpsData.latDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH + rowH/2);
-
-                ctx.textAlign = "left";
-                ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
-                ctx.fillText("Longitude", tableX + Math.round(10 * scale), tableY + rowH*2 + rowH/2);
-                ctx.textAlign = "center";
-                ctx.font = `${Math.round(18 * scale)}px sans-serif`;
-                ctx.fillText(gpsData.lngDec, tableX + colW1 + colW2/2, tableY + rowH*2 + rowH/2);
-                ctx.fillText(gpsData.lngDMS, tableX + colW1 + colW2 + (tableW - colW1 - colW2)/2, tableY + rowH*2 + rowH/2);
+        function openLastPhoto() {
+            if (lastPhotoUrl) {
+                const w = window.open('');
+                w.document.write(`<img src="${lastPhotoUrl}" style="width:100%; height:auto; background:#000;"/>`);
             }
-
-            // Vẽ logo lên ảnh chụp nếu đã tải lên
-            if (logoImage) {
-                const lw = Math.round(130 * scale);
-                const lh = (logoImage.height / logoImage.width) * lw;
-                const logoX = canvas.width - pad - tableW - lw - (tableW > 0 ? Math.round(20 * scale) : 0);
-                const logoY = canvas.height - pad - lh;
-                ctx.drawImage(logoImage, logoX, logoY, lw, lh);
-            }
-
-            saveFile(canvas.toDataURL('image/jpeg', 0.95), `NAM_A_GPS_${Date.now()}.jpg`);
         }
 
         function saveFile(url, filename) {
