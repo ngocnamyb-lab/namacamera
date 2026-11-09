@@ -40,8 +40,29 @@
         
         .wm-details { font-size: 0.78rem; color: #ddd; display: flex; flex-direction: column; gap: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
-        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
+        .control-panel { background: #141414; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; position: relative; }
         
+        /* Ô nhập ghi chú nhanh có hình cây bút ở cuối dòng */
+        .note-field-group {
+            display: flex;
+            align-items: center;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 2px 8px;
+            gap: 8px;
+        }
+        .note-field-group input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 6px 0;
+            font-size: 0.82rem;
+            outline: none;
+        }
+        .edit-icon { font-size: 1rem; cursor: pointer; opacity: 0.9; }
+
         .toolbar-row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
         .btn-action-small { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 7px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         
@@ -101,7 +122,6 @@
         <video id="camVideo" autoplay playsinline muted></video>
         <canvas id="camCanvas"></canvas>
 
-        <!-- Khung hiển thị watermark theo mẫu -->
         <div class="watermark-layer" id="watermarkLayer">
             <div class="wm-header-row">
                 <span id="uiBadge" class="wm-badge">Điểm danh</span>
@@ -109,22 +129,27 @@
                 <img id="uiLogo" class="wm-logo-img" alt="Logo">
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 12:30</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 12:45</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
-                <div id="uiNote">Ghi chú: Khảo sát hiện trạng thiết bị</div>
+                <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
         </div>
     </div>
 
     <div class="control-panel">
+        <!-- Ô nhập ghi chú nhanh có hình cây bút ở cuối dòng -->
+        <div class="note-field-group">
+            <input type="text" id="txtNoteQuick" value="Khảo sát hiện trạng thiết bị" placeholder="Nhập ghi chú hiện trường..." oninput="syncNoteInput(this)">
+            <span class="edit-icon" onclick="document.getElementById('txtNoteQuick').focus()">✏️</span>
+        </div>
+
         <div class="toolbar-row">
             <button class="btn-action-small" onclick="document.getElementById('fileLogo').click()">📁 Tải Logo lên</button>
             <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
-            <span style="font-size: 0.75rem; color: #aaa;" id="logoName">Chưa chọn logo</span>
+            <span style="font-size: 0.75rem; color: #aaa;" id="logoName">Đã lưu bộ nhớ</span>
         </div>
 
         <div class="action-bar">
-            <!-- Nút xem ảnh vừa chụp (Thumbnail) -->
             <img id="thumbPreview" class="thumbnail-preview" onclick="openLastPhoto()" alt="Ảnh chụp">
             
             <div class="mode-tabs">
@@ -137,7 +162,7 @@
         </div>
     </div>
 
-    <!-- Modal Chỉnh sửa mẫu (Templates Settings) -->
+    <!-- Modal Chỉnh sửa mẫu -->
     <div id="templateModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -177,10 +202,6 @@
                 <label>Hiển thị Ghi chú</label>
                 <input type="checkbox" id="chkNote" checked onchange="updateUI()">
             </div>
-            <div class="toggle-item">
-                <label>Nội dung ghi chú</label>
-                <input type="text" id="txtNoteContent" value="Khảo sát hiện trạng thiết bị" oninput="updateUI()">
-            </div>
 
             <button class="btn-done" onclick="closeTemplateModal()">Xong & Lưu mẫu</button>
         </div>
@@ -188,10 +209,24 @@
 
     <script>
         let mediaStream = null;
-        let logoImage = null;
+        let logoImage = new Image();
         let lastPhotoUrl = null;
         let currentMode = 'photo';
         let currentAddress = "QL37, Âu Lâu, Lào Cai";
+
+        // Khôi phục logo đã lưu từ LocalStorage nếu có
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLogo = localStorage.getItem('nama_saved_logo');
+            if (savedLogo) {
+                logoImage.src = savedLogo;
+                logoImage.onload = () => {
+                    document.getElementById('uiLogo').src = savedLogo;
+                    document.getElementById('uiLogo').style.display = document.getElementById('chkLogo').checked ? 'block' : 'none';
+                    document.getElementById('logoName').innerText = "Đã tải Logo từ bộ nhớ";
+                }
+            }
+            updateUI();
+        });
 
         function openTemplateModal() { document.getElementById('templateModal').style.display = 'flex'; }
         function closeTemplateModal() { document.getElementById('templateModal').style.display = 'none'; }
@@ -243,14 +278,17 @@
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
 
+        function syncNoteInput(input) {
+            document.getElementById('uiNote').innerText = input.value;
+        }
+
         function updateUI() {
             const hexColor = document.getElementById('bgColor').value;
             const opacityPercent = document.getElementById('bgOpacity').value;
             document.getElementById('opacityVal').innerText = opacityPercent;
             const alpha = opacityPercent / 100;
 
-            const rgbaStr = hexToRgba(hexColor, alpha);
-            document.getElementById('watermarkLayer').style.background = rgbaStr;
+            document.getElementById('watermarkLayer').style.background = hexToRgba(hexColor, alpha);
 
             const showLogo = document.getElementById('chkLogo').checked;
             const badgeVal = document.getElementById('txtBadge').value;
@@ -258,12 +296,12 @@
             const showTime = document.getElementById('chkTime').checked;
             const showLoc = document.getElementById('chkLocation').checked;
             const showNote = document.getElementById('chkNote').checked;
-            const noteVal = document.getElementById('txtNoteContent').value;
+            const noteVal = document.getElementById('txtNoteQuick').value;
 
             document.getElementById('uiBadge').style.display = badgeVal ? 'inline-block' : 'none';
             document.getElementById('uiBadge').innerText = badgeVal;
             document.getElementById('uiTitle').innerText = titleVal;
-            document.getElementById('uiLogo').style.display = (showLogo && logoImage) ? 'block' : 'none';
+            document.getElementById('uiLogo').style.display = (showLogo && logoImage.src) ? 'block' : 'none';
 
             document.getElementById('uiTime').style.display = showTime ? 'block' : 'none';
             document.getElementById('uiLocation').style.display = showLoc ? 'block' : 'none';
@@ -277,11 +315,17 @@
                 document.getElementById('logoName').innerText = file.name;
                 const reader = new FileReader();
                 reader.onload = evt => {
-                    logoImage = new Image();
-                    logoImage.src = evt.target.result;
+                    const base64Str = evt.target.result;
+                    logoImage.src = base64Str;
                     logoImage.onload = () => {
-                        document.getElementById('uiLogo').src = evt.target.result;
+                        document.getElementById('uiLogo').src = base64Str;
                         updateUI();
+                        // Lưu vĩnh viễn vào bộ nhớ trình duyệt
+                        try {
+                            localStorage.setItem('nama_saved_logo', base64Str);
+                        } catch(err) {
+                            console.log("Không thể lưu localStorage: " + err);
+                        }
                     }
                 }
                 reader.readAsDataURL(file);
@@ -346,10 +390,10 @@
                 currentY += Math.round(35 * scale);
             }
             if (document.getElementById('chkNote').checked) {
-                ctx.fillText(document.getElementById('txtNoteContent').value, pad + Math.round(20 * scale), currentY);
+                ctx.fillText(document.getElementById('txtNoteQuick').value, pad + Math.round(20 * scale), currentY);
             }
 
-            if (document.getElementById('chkLogo').checked && logoImage) {
+            if (document.getElementById('chkLogo').checked && logoImage.src) {
                 const lw = Math.round(120 * scale);
                 const lh = (logoImage.height / logoImage.width) * lw;
                 ctx.drawImage(logoImage, canvas.width - pad - lw - Math.round(20 * scale), canvas.height - pad - boxH + Math.round(20 * scale), lw, lh);
