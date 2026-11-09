@@ -17,10 +17,10 @@
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(0,0,0,0.85); z-index: 10; font-size: 0.8rem; flex-shrink: 0; }
         .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-size: 0.75rem; }
 
-        /* Camera mở rộng tràn màn hình, tối ưu hóa tuyệt đối cho cả chế độ dọc và ngang */
-        .camera-viewport { position: relative; flex-grow: 1; width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        /* Khung hiển thị camera giữ tỷ lệ chuẩn chuyên nghiệp, có khoảng đệm cân đối */
+        .camera-viewport { position: relative; flex-grow: 1; width: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; background: #000; }
+        video { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 1; background: #000; }
         canvas { display: none; }
 
         /* Chữ bản quyền dọc cách lề phải chuẩn khoảng 2 li (15px) */
@@ -148,7 +148,7 @@
                 <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
             </div>
             <div class="wm-details">
-                <div id="uiTime">Thứ Hai, 09/11/2026 15:20</div>
+                <div id="uiTime">Thứ Hai, 09/11/2026 15:55</div>
                 <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                 <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
             </div>
@@ -475,23 +475,13 @@
             thumb.src = lastPhotoUrl;
             thumb.style.display = 'block';
 
-            // Xử lý lưu ảnh trực tiếp ngầm, hoàn toàn không hiển thị thông báo tải tệp thô
-            canvas.toBlob(blob => {
-                const file = new File([blob], `NAM_A_${Date.now()}.jpg`, { type: "image/jpeg" });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        files: [file],
-                        title: 'NamA GPS Camera',
-                        text: 'Ảnh khảo sát hiện trường'
-                    }).catch(() => {});
-                } else {
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = `NAM_A_${Date.now()}.jpg`;
-                    // Kích hoạt ẩn hoàn toàn không mở tab hay hiện pop-up rườm rà
-                    setTimeout(() => a.remove(), 100);
-                }
-            }, 'image/jpeg', 0.95);
+            // Lưu ảnh ngầm hoàn toàn sạch sẽ, không hiện bảng chia sẻ hay đường dẫn thô
+            const a = document.createElement('a');
+            a.href = lastPhotoUrl;
+            a.download = `NAM_A_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function openLastPhoto() {
