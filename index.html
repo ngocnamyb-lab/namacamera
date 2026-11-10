@@ -107,8 +107,14 @@
             align-items: center; 
         }
         .thumbnail-preview { width: 40px; height: 40px; border-radius: 6px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
+        
+        /* Cụm nút chụp và đổi camera */
+        .capture-group { display: flex; align-items: center; gap: 15px; }
         .btn-capture { width: 52px; height: 52px; border-radius: 50%; background: #fff; border: 3px solid #035835; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
         .btn-capture:active { transform: scale(0.92); }
+        
+        .btn-switch-cam { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+
         .mode-tabs { display: flex; background: #0a0a0a; border-radius: 12px; padding: 2px; }
         .tab-btn { background: none; border: none; color: #888; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 10px; cursor: pointer; }
         .tab-btn.active { background: #035835; color: #fff; }
@@ -131,6 +137,7 @@
                 gap: 16px; 
                 margin: auto 0; 
             }
+            .capture-group { flex-direction: column; gap: 10px; }
             .mode-tabs { width: 100%; justify-content: center; }
             .tab-btn { flex: 1; text-align: center; }
         }
@@ -215,7 +222,11 @@
                 <button class="tab-btn" onclick="switchMode('video', event)">Quay Phim</button>
             </div>
 
-            <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
+            <div class="capture-group">
+                <button class="btn-switch-cam" onclick="toggleCamera()" title="Đổi camera trước/sau">🔄</button>
+                <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
+            </div>
+
             <div style="font-size: 0.75rem; color: #888; text-align: right;" id="timerDisplay">00:00</div>
         </div>
     </div>
@@ -293,6 +304,7 @@
         let logoImage = new Image();
         let lastPhotoUrl = null;
         let currentMode = 'photo';
+        let useFrontCamera = false; // Trạng thái camera trước/sau
         let currentAddress = "QL37, Âu Lâu, Lào Cai";
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -322,27 +334,25 @@
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
                 
-                // Cấu hình tối ưu lấy nét tự động liên tục (continuous focus) và độ phân giải cao
                 const constraints = {
                     video: { 
-                        facingMode: "environment",
+                        facingMode: useFrontCamera ? "user" : "environment",
                         width: { ideal: 1920 },
                         height: { ideal: 1080 },
-                        focusMode: "continuous" // Lấy nét tự động liên tục
+                        focusMode: "continuous"
                     },
                     audio: currentMode === 'video'
                 };
 
                 mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 
-                // Kích hoạt thêm thông số lấy nét nâng cao qua track constraints nếu thiết bị hỗ trợ
                 const track = mediaStream.getVideoTracks()[0];
                 if (track && track.getCapabilities) {
                     const capabilities = track.getCapabilities();
                     if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
                         await track.applyConstraints({
                             advanced: [{ focusMode: "continuous" }]
-                        }).catch(e => console.log("Không hỗ trợ khóa focus nâng cao:", e));
+                        }).catch(e => console.log(e));
                     }
                 }
 
@@ -356,6 +366,11 @@
                     await document.getElementById('camVideo').play();
                 } catch(e) { console.log(e); }
             }
+        }
+
+        function toggleCamera() {
+            useFrontCamera = !useFrontCamera;
+            initCamera();
         }
 
         function initGPS() {
@@ -544,12 +559,18 @@
 
             lastPhotoUrl = canvas.toDataURL('image/jpeg', 0.95);
             
+            // Hiển thị ô xem lại ảnh nhỏ
             const thumb = document.getElementById('thumbPreview');
             thumb.src = lastPhotoUrl;
             thumb.style.display = 'block';
 
-            // Lưu ngầm không kích hoạt thẻ <a> download gây ra thông báo pop-up rườm rà trên trình duyệt
-            // Ảnh đã được lưu trực tiếp vào bộ nhớ tạm, anh có thể bấm vào ô xem trước nhỏ (thumbnail) bên cạnh để xem lại bất cứ lúc nào.
+            // Kích hoạt lưu ngầm vào thư viện máy mà không gây hiện thông báo tải file phiền toái
+            const a = document.createElement('a');
+            a.href = lastPhotoUrl;
+            a.download = `NAM_A_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => document.body.removeChild(a), 100);
         }
 
         function openLastPhoto() {
