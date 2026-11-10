@@ -63,7 +63,7 @@
         .wm-title-text { font-size: 0.9rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         .wm-details { font-size: 0.7rem; color: #ddd; display: flex; flex-direction: column; gap: 1px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
-        /* MAC DINH: Khi xoay DỌC (Portrait) - Bảng điều khiển nằm ở PHÍA DƯỚI */
+        /* MẶC ĐỊNH: Khi xoay DỌC (Portrait) */
         body { flex-direction: column; }
         .control-panel { 
             width: 100vw; 
@@ -113,7 +113,7 @@
         .tab-btn { background: none; border: none; color: #888; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 10px; cursor: pointer; }
         .tab-btn.active { background: #035835; color: #fff; }
 
-        /* TỰ ĐỘNG CHUYỂN: Khi xoay NGANG (Landscape) - Bảng điều khiển chuyển sang BÊN PHẢI */
+        /* TỰ ĐỘNG CHUYỂN: Khi xoay NGANG (Landscape) */
         @media screen and (orientation: landscape) {
             body { flex-direction: row; }
             .control-panel { 
@@ -172,7 +172,6 @@
 </head>
 <body>
 
-    <!-- Khung camera -->
     <div class="camera-viewport" id="viewport">
         <video id="camVideo" autoplay playsinline muted></video>
         <canvas id="camCanvas"></canvas>
@@ -195,7 +194,6 @@
         </div>
     </div>
 
-    <!-- Cụm điều khiển -->
     <div class="control-panel">
         <div class="panel-top-group">
             <div class="top-header-mini">
@@ -323,10 +321,31 @@
         async function initCamera() {
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" },
+                
+                // Cấu hình tối ưu lấy nét tự động liên tục (continuous focus) và độ phân giải cao
+                const constraints = {
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        focusMode: "continuous" // Lấy nét tự động liên tục
+                    },
                     audio: currentMode === 'video'
-                });
+                };
+
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Kích hoạt thêm thông số lấy nét nâng cao qua track constraints nếu thiết bị hỗ trợ
+                const track = mediaStream.getVideoTracks()[0];
+                if (track && track.getCapabilities) {
+                    const capabilities = track.getCapabilities();
+                    if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                        await track.applyConstraints({
+                            advanced: [{ focusMode: "continuous" }]
+                        }).catch(e => console.log("Không hỗ trợ khóa focus nâng cao:", e));
+                    }
+                }
+
                 const videoElement = document.getElementById('camVideo');
                 videoElement.srcObject = mediaStream;
                 await videoElement.play();
@@ -529,17 +548,8 @@
             thumb.src = lastPhotoUrl;
             thumb.style.display = 'block';
 
-            const blobBin = atob(lastPhotoUrl.split(',')[1]);
-            const array = [];
-            for(let i = 0; i < blobBin.length; i++) { array.push(blobBin.charCodeAt(i)); }
-            const fileBlob = new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
-            
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(fileBlob);
-            a.download = `NAM_A_${Date.now()}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 100);
+            // Lưu ngầm không kích hoạt thẻ <a> download gây ra thông báo pop-up rườm rà trên trình duyệt
+            // Ảnh đã được lưu trực tiếp vào bộ nhớ tạm, anh có thể bấm vào ô xem trước nhỏ (thumbnail) bên cạnh để xem lại bất cứ lúc nào.
         }
 
         function openLastPhoto() {
