@@ -8,17 +8,14 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
     <title>NamA GPS Camera Pro</title>
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"NamA GPS Camera Pro","short_name":"NamACamera","start_url":".","display":"standalone","background_color":"%23000000","theme_color":"%23000000","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3680/3680039.png","sizes":"512x512","type":"image/png"}]}'>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        html, body { width: 100vw; height: 100vh; background: #000; color: #fff; display: flex; flex-direction: column; overflow: hidden; position: fixed; }
+        html, body { width: 100vw; height: 100vh; background: #000; color: #fff; display: flex; flex-direction: row; overflow: hidden; position: fixed; }
 
-        .top-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(0,0,0,0.9); z-index: 10; font-size: 0.75rem; flex-shrink: 0; }
-        .top-header button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 10px; border-radius: 12px; cursor: pointer; font-size: 0.7rem; }
-
-        /* Khung chứa camera full màn hình, chống tràn và không tạo khoảng trắng */
-        .camera-viewport { position: relative; flex-grow: 1; width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        /* Khung chứa camera nằm chính giữa màn hình */
+        .camera-viewport { position: relative; flex-grow: 1; height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; background: #000; }
         canvas { display: none; }
@@ -47,7 +44,7 @@
             white-space: nowrap;
         }
 
-        /* Bảng watermark nằm gọn gàng phía dưới bên trong khung hình */
+        /* Bảng watermark phía dưới góc trái khung hình camera */
         .watermark-layer {
             position: absolute;
             bottom: 12px;
@@ -67,27 +64,63 @@
         
         .wm-details { font-size: 0.7rem; color: #ddd; display: flex; flex-direction: column; gap: 1px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
-        .control-panel { background: #141414; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #2a2a2a; z-index: 10; flex-shrink: 0; }
+        /* Toàn bộ cụm điều khiển nằm gọn gàng ở CẠNH BÊN PHẢI */
+        .control-panel { 
+            width: 300px; 
+            background: #141414; 
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-left: 1px solid #2a2a2a; 
+            z-index: 10; 
+            flex-shrink: 0; 
+            height: 100vh;
+        }
+
+        .panel-top-group { width: 100%; display: flex; flex-direction: column; gap: 12px; }
         
+        .top-header-mini { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 0.75rem; }
+        .top-header-mini button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 0.7rem; }
+
         .note-field-group {
             display: flex;
             align-items: center;
             background: #222;
             border: 1px solid #555;
             border-radius: 6px;
-            padding: 4px 10px;
+            padding: 8px 10px;
             gap: 6px;
+            width: 100%;
         }
         .note-field-group input {
             flex: 1;
             background: transparent;
             border: none;
             color: #fff;
-            padding: 2px 0;
             font-size: 0.8rem;
             outline: none;
         }
         .edit-icon { font-size: 0.9rem; cursor: pointer; padding: 2px; }
+
+        .action-bar-right { 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 16px; 
+            margin: auto 0;
+        }
+
+        .thumbnail-preview { width: 48px; height: 48px; border-radius: 8px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
+        
+        .btn-capture { width: 68px; height: 68px; border-radius: 50%; background: #fff; border: 4px solid #035835; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .btn-capture:active { transform: scale(0.92); }
+
+        .mode-tabs { display: flex; background: #0a0a0a; border-radius: 12px; padding: 2px; width: 100%; justify-content: center; }
+        .tab-btn { background: none; border: none; color: #888; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; border-radius: 10px; cursor: pointer; flex: 1; text-align: center; }
+        .tab-btn.active { background: #035835; color: #fff; }
 
         /* Modal Chỉnh sửa mẫu */
         #templateModal {
@@ -96,15 +129,15 @@
             top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.85);
             z-index: 99;
-            justify-content: flex-end;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         .modal-content {
             background: #1e1e1e;
-            width: 100%;
+            width: 90%;
+            max-width: 500px;
             max-height: 85vh;
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
+            border-radius: 12px;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -123,30 +156,15 @@
         .btn-upload-modal { background: #035835; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
 
         .btn-done { background: #035835; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; margin-top: 10px; }
-
-        .action-bar { display: flex; justify-content: space-between; align-items: center; }
-        .thumbnail-preview { width: 40px; height: 40px; border-radius: 6px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
-        
-        .btn-capture { width: 52px; height: 52px; border-radius: 50%; background: #fff; border: 3px solid #035835; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
-        .btn-capture:active { transform: scale(0.92); }
-
-        .mode-tabs { display: flex; background: #0a0a0a; border-radius: 12px; padding: 2px; }
-        .tab-btn { background: none; border: none; color: #888; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 10px; cursor: pointer; }
-        .tab-btn.active { background: #035835; color: #fff; }
     </style>
 </head>
 <body>
 
-    <div class="top-header">
-        <span id="gpsStatus" style="color: #4cd964;">📍 GPS: Đã sẵn sàng</span>
-        <button onclick="openTemplateModal()">⚙️ Chỉnh sửa mẫu</button>
-    </div>
-
+    <!-- Khung camera nằm chính giữa màn hình -->
     <div class="camera-viewport" id="viewport">
         <video id="camVideo" autoplay playsinline muted></video>
         <canvas id="camCanvas"></canvas>
 
-        <!-- Lớp chứa toàn bộ chữ bản quyền và watermark bám khít bên trong khung hình -->
         <div class="video-inner-container">
             <div id="uiVerticalText" class="vertical-watermark-preview">NAM A VALUATION APP</div>
 
@@ -157,7 +175,7 @@
                     <span id="uiTitle" class="wm-title-text">Máy nâng hạ</span>
                 </div>
                 <div class="wm-details">
-                    <div id="uiTime">Thứ Hai, 09/11/2026 18:04</div>
+                    <div id="uiTime">Thứ Hai, 09/11/2026 18:45</div>
                     <div id="uiLocation">QL37, Âu Lâu, Lào Cai</div>
                     <div id="uiNote">Khảo sát hiện trạng thiết bị</div>
                 </div>
@@ -165,357 +183,22 @@
         </div>
     </div>
 
+    <!-- Cụm điều khiển nằm gọn hoàn toàn ở bên phải -->
     <div class="control-panel">
-        <div class="note-field-group">
-            <input type="text" id="txtNoteQuick" value="Khảo sát hiện trạng thiết bị" placeholder="Nhập ghi chú hiện trường..." oninput="syncNoteInput(this)">
-            <span class="edit-icon" onclick="focusNoteInput()" title="Sửa ghi chú">✏️</span>
+        <div class="panel-top-group">
+            <div class="top-header-mini">
+                <span id="gpsStatus" style="color: #4cd964;">📍 Sẵn sàng</span>
+                <button onclick="openTemplateModal()">⚙️ Cài đặt mẫu</button>
+            </div>
+
+            <div class="note-field-group">
+                <input type="text" id="txtNoteQuick" value="Khảo sát hiện trạng thiết bị" placeholder="Nhập ghi chú..." oninput="syncNoteInput(this)">
+                <span class="edit-icon" onclick="focusNoteInput()" title="Sửa ghi chú">✏️</span>
+            </div>
         </div>
 
-        <div class="action-bar">
+        <div class="action-bar-right">
             <img id="thumbPreview" class="thumbnail-preview" onclick="openLastPhoto()" alt="Ảnh chụp">
             
             <div class="mode-tabs">
-                <button class="tab-btn active" onclick="switchMode('photo', event)">Ảnh</button>
-                <button class="tab-btn" onclick="switchMode('video', event)">Quay Phim</button>
-            </div>
-
-            <button class="btn-capture" id="actionBtn" onclick="takePhoto()"></button>
-            <div style="font-size: 0.7rem; color: #888; width: 35px; text-align: right;" id="timerDisplay">00:00</div>
-        </div>
-    </div>
-
-    <!-- Modal Chỉnh sửa mẫu -->
-    <div id="templateModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Chỉnh sửa mẫu hiển thị</h3>
-                <button class="modal-close" onclick="closeTemplateModal()">✕</button>
-            </div>
-
-            <div class="toggle-item">
-                <label>Tải Logo lên (Thay chỗ Điểm danh)</label>
-                <div>
-                    <button class="btn-upload-modal" onclick="document.getElementById('fileLogo').click()">Chọn ảnh</button>
-                    <input type="file" id="fileLogo" accept="image/*" style="display:none;" onchange="loadLogo(event)">
-                </div>
-            </div>
-            <div class="toggle-item">
-                <label>Hiển thị Logo</label>
-                <input type="checkbox" id="chkLogo" checked onchange="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Màu nền bảng</label>
-                <input type="color" id="bgColor" value="#000000" onchange="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Độ trong suốt nền (<span id="opacityVal">65</span>%)</label>
-                <input type="range" id="bgOpacity" min="0" max="100" value="65" oninput="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Ẩn/Hiện chữ bản quyền dọc</label>
-                <input type="checkbox" id="chkVerticalCopyright" checked onchange="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Chữ bản quyền dọc</label>
-                <input type="text" id="txtVerticalCopyright" value="NAM A VALUATION APP" oninput="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Màu chữ dọc</label>
-                <input type="color" id="verticalColor" value="#ffffff" onchange="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Độ mờ chữ dọc (<span id="verticalOpacityVal">35</span>%)</label>
-                <input type="range" id="verticalOpacity" min="10" max="100" value="35" oninput="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Nhãn phụ (nếu không dùng Logo)</label>
-                <input type="text" id="txtBadge" value="Điểm danh" oninput="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Tiêu đề chính</label>
-                <input type="text" id="txtTitle" value="Máy nâng hạ" oninput="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Hiển thị Thời gian</label>
-                <input type="checkbox" id="chkTime" checked onchange="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Hiển thị Vị trí GPS</label>
-                <input type="checkbox" id="chkLocation" checked onchange="updateUI()">
-            </div>
-            <div class="toggle-item">
-                <label>Hiển thị Ghi chú</label>
-                <input type="checkbox" id="chkNote" checked onchange="updateUI()">
-            </div>
-
-            <button class="btn-done" onclick="closeTemplateModal()">Xong & Lưu mẫu</button>
-        </div>
-    </div>
-
-    <script>
-        let mediaStream = null;
-        let logoImage = new Image();
-        let lastPhotoUrl = null;
-        let currentMode = 'photo';
-        let currentAddress = "QL37, Âu Lâu, Lào Cai";
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedLogo = localStorage.getItem('nama_saved_logo');
-            if (savedLogo) {
-                logoImage.src = savedLogo;
-                logoImage.onload = () => {
-                    document.getElementById('uiLogo').src = savedLogo;
-                    const showLogo = document.getElementById('chkLogo').checked;
-                    document.getElementById('uiLogo').style.display = showLogo ? 'inline-block' : 'none';
-                    document.getElementById('uiBadge').style.display = showLogo ? 'none' : 'inline-block';
-                }
-            }
-            updateUI();
-        });
-
-        function openTemplateModal() { document.getElementById('templateModal').style.display = 'flex'; }
-        function closeTemplateModal() { document.getElementById('templateModal').style.display = 'none'; }
-
-        function focusNoteInput() {
-            const inputField = document.getElementById('txtNoteQuick');
-            inputField.focus();
-            inputField.select();
-        }
-
-        async function initCamera() {
-            try {
-                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" },
-                    audio: currentMode === 'video'
-                });
-                const videoElement = document.getElementById('camVideo');
-                videoElement.srcObject = mediaStream;
-                await videoElement.play();
-            } catch (err) {
-                try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                    document.getElementById('camVideo').srcObject = mediaStream;
-                    await document.getElementById('camVideo').play();
-                } catch(e) { console.log(e); }
-            }
-        }
-
-        function initGPS() {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.watchPosition(pos => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    currentAddress = `Tọa độ: ${lat.toFixed(6)}°N, ${lng.toFixed(6)}°E`;
-                    document.getElementById('uiLocation').innerText = currentAddress;
-                    document.getElementById('gpsStatus').innerText = "📍 GPS: Đã sẵn sàng";
-                }, err => {
-                    document.getElementById('gpsStatus').innerText = "📍 GPS: Dùng mặc định";
-                }, { enableHighAccuracy: true });
-            }
-        }
-
-        setInterval(() => {
-            const now = new Date();
-            const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
-            const timeStr = `${days[now.getDay()]}, ${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            document.getElementById('uiTime').innerText = timeStr;
-        }, 1000);
-
-        function hexToRgba(hex, alpha) {
-            let r = parseInt(hex.slice(1, 3), 16) || 0;
-            let g = parseInt(hex.slice(3, 5), 16) || 0;
-            let b = parseInt(hex.slice(5, 7), 16) || 0;
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-
-        function syncNoteInput(input) {
-            document.getElementById('uiNote').innerText = input.value;
-        }
-
-        function updateUI() {
-            const hexColor = document.getElementById('bgColor').value;
-            const opacityPercent = document.getElementById('bgOpacity').value;
-            document.getElementById('opacityVal').innerText = opacityPercent;
-            document.getElementById('watermarkLayer').style.background = hexToRgba(hexColor, opacityPercent / 100);
-
-            const showVText = document.getElementById('chkVerticalCopyright').checked;
-            const vText = document.getElementById('txtVerticalCopyright').value;
-            const vColorHex = document.getElementById('verticalColor').value;
-            const vOpacity = document.getElementById('verticalOpacity').value;
-            document.getElementById('verticalOpacityVal').innerText = vOpacity;
-            
-            const vElem = document.getElementById('uiVerticalText');
-            vElem.innerText = vText;
-            vElem.style.display = showVText ? 'block' : 'none';
-            vElem.style.color = hexToRgba(vColorHex, vOpacity / 100);
-
-            const showLogo = document.getElementById('chkLogo').checked;
-            const badgeVal = document.getElementById('txtBadge').value;
-            const titleVal = document.getElementById('txtTitle').value;
-            const showTime = document.getElementById('chkTime').checked;
-            const showLoc = document.getElementById('chkLocation').checked;
-            const showNote = document.getElementById('chkNote').checked;
-            const noteVal = document.getElementById('txtNoteQuick').value;
-
-            if (showLogo && logoImage.src) {
-                document.getElementById('uiLogo').style.display = 'inline-block';
-                document.getElementById('uiBadge').style.display = 'none';
-            } else {
-                document.getElementById('uiLogo').style.display = 'none';
-                document.getElementById('uiBadge').style.display = badgeVal ? 'inline-block' : 'none';
-                document.getElementById('uiBadge').innerText = badgeVal;
-            }
-
-            document.getElementById('uiTitle').innerText = titleVal;
-            document.getElementById('uiTime').style.display = showTime ? 'block' : 'none';
-            document.getElementById('uiLocation').style.display = showLoc ? 'block' : 'none';
-            document.getElementById('uiNote').style.display = showNote ? 'block' : 'none';
-            document.getElementById('uiNote').innerText = noteVal;
-        }
-
-        function loadLogo(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = evt => {
-                    const base64Str = evt.target.result;
-                    logoImage.src = base64Str;
-                    logoImage.onload = () => {
-                        document.getElementById('uiLogo').src = base64Str;
-                        updateUI();
-                        try {
-                            localStorage.setItem('nama_saved_logo', base64Str);
-                        } catch(err) {
-                            console.log("Không thể lưu localStorage: " + err);
-                        }
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function switchMode(mode, evt) {
-            currentMode = mode;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(evt && evt.target) evt.target.classList.add('active');
-            initCamera();
-        }
-
-        function takePhoto() {
-            const video = document.getElementById('camVideo');
-            const canvas = document.getElementById('camCanvas');
-            canvas.width = video.videoWidth || 1920;
-            canvas.height = video.videoHeight || 1080;
-            const ctx = canvas.getContext('2d');
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const scale = canvas.width / 1000;
-            const pad = Math.round(30 * scale);
-
-            // Vẽ chữ bản quyền dọc khi chụp ảnh (nếu được bật)
-            if (document.getElementById('chkVerticalCopyright').checked) {
-                ctx.save();
-                const vText = document.getElementById('txtVerticalCopyright').value;
-                const vColorHex = document.getElementById('verticalColor').value;
-                const vAlpha = document.getElementById('verticalOpacity').value / 100;
-                let vr = parseInt(vColorHex.slice(1, 3), 16) || 255;
-                let vg = parseInt(vColorHex.slice(3, 5), 16) || 255;
-                let vb = parseInt(vColorHex.slice(5, 7), 16) || 255;
-
-                // Căn chỉnh lề mép phải tương ứng khoảng 2 ly trên ảnh thực tế (~8px tỷ lệ)
-                ctx.translate(canvas.width - Math.round(8 * scale), canvas.height / 2);
-                ctx.rotate(Math.PI / 2);
-                ctx.font = `bold ${Math.round(20 * scale)}px sans-serif`;
-                ctx.fillStyle = `rgba(${vr}, ${vg}, ${vb}, ${vAlpha})`;
-                ctx.textAlign = "center";
-                ctx.fillText(vText, 0, 0);
-                ctx.restore();
-            }
-
-            ctx.save();
-            const hexColor = document.getElementById('bgColor').value;
-            const alpha = document.getElementById('bgOpacity').value / 100;
-            let r = parseInt(hexColor.slice(1, 3), 16) || 0;
-            let g = parseInt(hexColor.slice(3, 5), 16) || 0;
-            let b = parseInt(hexColor.slice(5, 7), 16) || 0;
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-
-            const boxH = Math.round(180 * scale);
-            ctx.fillRect(pad, canvas.height - pad - boxH, canvas.width - (pad * 2), boxH);
-
-            let currentY = canvas.height - pad - boxH + Math.round(30 * scale);
-
-            const showLogo = document.getElementById('chkLogo').checked;
-            const badgeText = document.getElementById('txtBadge').value;
-            const titleText = document.getElementById('txtTitle').value;
-            
-            ctx.font = `bold ${Math.round(28 * scale)}px sans-serif`;
-
-            if (showLogo && logoImage.src) {
-                const lw = Math.round(100 * scale);
-                const lh = (logoImage.height / logoImage.width) * lw;
-                ctx.drawImage(logoImage, pad + Math.round(20 * scale), currentY - Math.round(24 * scale), lw, lh);
-                
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(titleText, pad + Math.round(130 * scale), currentY);
-            } else if (badgeText) {
-                ctx.fillStyle = "#ffcc00";
-                ctx.fillText(badgeText, pad + Math.round(20 * scale), currentY);
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(titleText, pad + Math.round(150 * scale), currentY);
-            } else {
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(titleText, pad + Math.round(20 * scale), currentY);
-            }
-
-            currentY += Math.round(45 * scale);
-            ctx.font = `${Math.round(22 * scale)}px sans-serif`;
-            ctx.fillStyle = "#dddddd";
-
-            if (document.getElementById('chkTime').checked) {
-                ctx.fillText(document.getElementById('uiTime').innerText, pad + Math.round(20 * scale), currentY);
-                currentY += Math.round(35 * scale);
-            }
-            if (document.getElementById('chkLocation').checked) {
-                ctx.fillText(document.getElementById('uiLocation').innerText, pad + Math.round(20 * scale), currentY);
-                currentY += Math.round(35 * scale);
-            }
-            if (document.getElementById('chkNote').checked) {
-                ctx.fillText(document.getElementById('txtNoteQuick').value, pad + Math.round(20 * scale), currentY);
-            }
-
-            ctx.restore();
-
-            lastPhotoUrl = canvas.toDataURL('image/jpeg', 0.95);
-            
-            const thumb = document.getElementById('thumbPreview');
-            thumb.src = lastPhotoUrl;
-            thumb.style.display = 'block';
-
-            const blobBin = atob(lastPhotoUrl.split(',')[1]);
-            const array = [];
-            for(let i = 0; i < blobBin.length; i++) { array.push(blobBin.charCodeAt(i)); }
-            const fileBlob = new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
-            
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(fileBlob);
-            a.download = `NAM_A_${Date.now()}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 100);
-        }
-
-        function openLastPhoto() {
-            if (lastPhotoUrl) {
-                const w = window.open('');
-                w.document.write(`<img src="${lastPhotoUrl}" style="width:100%; height:auto; background:#000;"/>`);
-            }
-        }
-
-        initCamera();
-        initGPS();
-        updateUI();
-    </script>
-</body>
-</html>
+                <button class="tab-btn active
