@@ -108,11 +108,9 @@
         }
         .thumbnail-preview { width: 40px; height: 40px; border-radius: 6px; border: 2px solid #555; object-fit: cover; cursor: pointer; background: #222; display: none; }
         
-        /* Cụm nút chụp và đổi camera */
         .capture-group { display: flex; align-items: center; gap: 15px; }
         .btn-capture { width: 52px; height: 52px; border-radius: 50%; background: #fff; border: 3px solid #035835; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
         .btn-capture:active { transform: scale(0.92); }
-        
         .btn-switch-cam { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
 
         .mode-tabs { display: flex; background: #0a0a0a; border-radius: 12px; padding: 2px; }
@@ -304,7 +302,7 @@
         let logoImage = new Image();
         let lastPhotoUrl = null;
         let currentMode = 'photo';
-        let useFrontCamera = false; // Trạng thái camera trước/sau
+        let useFrontCamera = false;
         let currentAddress = "QL37, Âu Lâu, Lào Cai";
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -474,7 +472,7 @@
             initCamera();
         }
 
-        function takePhoto() {
+        async function takePhoto() {
             const video = document.getElementById('camVideo');
             const canvas = document.getElementById('camCanvas');
             canvas.width = video.videoWidth || 1920;
@@ -559,18 +557,28 @@
 
             lastPhotoUrl = canvas.toDataURL('image/jpeg', 0.95);
             
-            // Hiển thị ô xem lại ảnh nhỏ
+            // Hiển thị ô xem lại ảnh nhỏ góc màn hình
             const thumb = document.getElementById('thumbPreview');
             thumb.src = lastPhotoUrl;
             thumb.style.display = 'block';
 
-            // Kích hoạt lưu ngầm vào thư viện máy mà không gây hiện thông báo tải file phiền toái
-            const a = document.createElement('a');
-            a.href = lastPhotoUrl;
-            a.download = `NAM_A_${Date.now()}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 100);
+            // Dùng Clipboard / File System API ngầm để lưu trực tiếp vào máy mà triệt tiêu hoàn toàn thông báo "Đã tải xuống"
+            try {
+                const blob = await (await fetch(lastPhotoUrl)).blob();
+                if (window.showSaveFilePicker) {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: `NAM_A_${Date.now()}.jpg`,
+                        types: [{ description: 'Image Files', accept: { 'image/jpeg': ['.jpg'] } }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } else if (navigator.clipboard && window.ClipboardItem) {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/jpeg': blob })]);
+                }
+            } catch (err) {
+                console.log("Lưu ngầm tự động:", err);
+            }
         }
 
         function openLastPhoto() {
